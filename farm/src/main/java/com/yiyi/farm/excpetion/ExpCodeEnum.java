@@ -12,7 +12,9 @@ import java.io.Serializable;
 public enum ExpCodeEnum implements Serializable{
 
     UNKNOW_ERROR(ExpPrefixUtil.COMEXPPREFIX + "000","未知异常"),
-    HTTP_REQ_METHOD_ERROR(ExpPrefixUtil.COMEXPPREFIX + "005", "HTTP请求方法不正确"),;
+    HTTP_REQ_METHOD_ERROR(ExpPrefixUtil.COMEXPPREFIX + "005", "HTTP请求方法不正确"),
+
+    INFORMATIONREQ_NULL(ExpPrefixUtil.REQEXPPREFIX + "001", "InformationReq为空");
 
     private String code;
     private String msg;

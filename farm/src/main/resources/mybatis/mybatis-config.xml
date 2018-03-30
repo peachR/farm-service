@@ -13,10 +13,10 @@
         <typeAlias alias="User" type="com.peach.boot.entity.user.User" />
 
 
-    </typeAliases>
+    </typeAliases>-->
 
     <typeHandlers>
-        <typeHandler handler="com.peach.boot.typeHandler.EnumTypeHandler" javaType="com.peach.boot.enumeration.user.UserActivateEnum"/>
-    </typeHandlers>-->
+        <typeHandler handler="com.yiyi.farm.typehandler.EnumTypeHandler" javaType="com.yiyi.farm.enumeration.good.GoodEnum"/>
+    </typeHandlers>
 
 </configuration>

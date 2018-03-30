@@ -2,6 +2,8 @@ package com.yiyi.farm.controller.customer;
 
 import com.yiyi.farm.annotation.Login;
 import com.yiyi.farm.entity.customer.CustomerEntity;
+import com.yiyi.farm.req.information.InformationReq;
+import com.yiyi.farm.rsp.Result;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,16 +23,16 @@ public interface CustomerInformationController {
      */
     @Login
     @GetMapping("/allInfo")
-    public List<CustomerEntity> findInformationForAll();
+    public Result<List<CustomerEntity>> findInformationForAll();
 
     /**
      * 获取指定页数的用户信息
-     * @param page 获取页数
-     * @param items 每页最大个数
+     * @param inforeq
      * @return
      */
     @Login
     @GetMapping("/info")
-    public List<CustomerEntity> findInformationInPage(@RequestParam(value="page") int page, @RequestParam(value = "items", required = false, defaultValue = "10") int items);
+    public Result<List<CustomerEntity>> findInformationInPage(InformationReq inforeq);
+
 
 }
