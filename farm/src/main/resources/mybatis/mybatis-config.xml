@@ -17,6 +17,7 @@
 
     <typeHandlers>
         <typeHandler handler="com.yiyi.farm.typehandler.EnumTypeHandler" javaType="com.yiyi.farm.enumeration.good.GoodEnum"/>
+        <typeHandler handler="com.yiyi.farm.typehandler.TimeHandler" javaType="java.sql.Timestamp" />
     </typeHandlers>
 
 </configuration>

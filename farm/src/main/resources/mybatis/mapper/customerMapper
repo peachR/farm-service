@@ -2,7 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yiyi.farm.dao.customer.CustomerDao">
     <resultMap id="customerMap" type="com.yiyi.farm.entity.customer.CustomerEntity">
-        <id property="" column="" />
+        <result property="uid" column="player_id"/>
+        <result property="server_id" column="server_id"/>
+        <result property="phone" column="phone" />
+        <result property="time" column="register_time"/>
+        <result property="ip" column="register_ip" />
+        <result property="name" column="name"/>
+        <result property="hongbao" column="hongbao"/>
+
+
     </resultMap>
 
 </mapper>

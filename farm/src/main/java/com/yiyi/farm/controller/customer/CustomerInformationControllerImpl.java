@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * @author peach
+ * @date 2018-03-30 15:17:33
+ * @description
+ */
 @RestController
 public class CustomerInformationControllerImpl implements CustomerInformationController {
 
