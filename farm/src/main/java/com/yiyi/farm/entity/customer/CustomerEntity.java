@@ -38,11 +38,11 @@ public class CustomerEntity {
         this.phone = phone;
     }
 
-    public Integer getTime() {
+    public Timestamp getTime() {
         return time;
     }
 
-    public void setTime(Integer time) {
+    public void setTime(Timestamp time) {
         this.time = time;
     }
 
