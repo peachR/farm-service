@@ -36,7 +36,7 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleFindChildByUid(InviteReq invite) {
-        Queue<InviteRelationEntity> list = inviteService.findChildByPhone(invite.getUid());
+        Queue<InviteRelationEntity> list = inviteService.findChildByUid(invite.getUid());
         return Result.newSuccessResult(list);
     }
 
