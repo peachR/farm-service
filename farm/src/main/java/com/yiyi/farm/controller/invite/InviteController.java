@@ -13,8 +13,11 @@ public interface InviteController {
     @PutMapping("init")
     public Result handleInit();
 
-    @GetMapping("childByphone")
+    @GetMapping("childByPhone")
     public Result handleFindChildByPhone(InviteReq invite);
+
+    @GetMapping("childNumberByPhone")
+    public Result handleFindChildNumberByPhone(InviteReq inviteReq);
 
     @GetMapping("childByUid")
     public Result handleFindChildByUid(InviteReq invite);

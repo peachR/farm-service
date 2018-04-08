@@ -5,6 +5,7 @@ import com.yiyi.farm.dao.invite.InviteRelationDao;
 import com.yiyi.farm.entity.invite.InviteInfoEntity;
 import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.facade.invite.InviteService;
+import com.yiyi.farm.tool.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,9 @@ public class InviteServiceImpl implements InviteService {
 
     private List<InviteInfoEntity> nowNodes;
 
+    /**
+     * 线程池，用于多线程查询子孙节点
+     */
     private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new LinkedBlockingQueue<>());
 
     /**
@@ -34,38 +38,59 @@ public class InviteServiceImpl implements InviteService {
     /**
      * 根据phone查子节点
      */
-    public Queue<InviteRelationEntity> findChildByPhone(String phone){
+    public Queue<InviteRelationEntity> findChildByPhone(String phone, int[] first){
         //验证先省略
 
         Queue<InviteRelationEntity> result = new ConcurrentLinkedQueue<>();
         Queue<String> id = new ConcurrentLinkedQueue<>();
         id.offer(phone);
-        findAndAdd(result, id, true);
+        first[0] = findAndAdd(result, id, true);
         return result;
     }
 
-    public Queue<InviteRelationEntity> findChildByUid(String uid){
+    /**
+     * 根据uid查询子孙节点
+     * @param uid
+     * @return
+     */
+    public Queue<InviteRelationEntity> findChildByUid(String uid, int[] first){
         //验证先省略
 
         Queue<InviteRelationEntity> result = new ConcurrentLinkedQueue<>();
         Queue<String> id = new ConcurrentLinkedQueue<>();
         id.offer(uid);
         System.out.println("find");
-        findAndAdd(result, id, false);
+        first[0] = findAndAdd(result, id, false);
         return result;
     }
 
-    private void findAndAdd(Queue<InviteRelationEntity> result, Queue<String> phones, boolean isPhone) {
-        final Executor executor = this.executor;
+    @Override
+    public Queue<InviteRelationEntity> findChildByPhone(String phone) {
+        return findChildByPhone(phone, new int[1]);
+    }
+
+    @Override
+    public Queue<InviteRelationEntity> findChildByUid(String uid) {
+        return findChildByUid(uid, new int[1]);
+    }
+
+    @Override
+    public Pair findChildNumbersByPhone(String phone) {
+        int[] first = new int[1];
+        int all = findChildByPhone(phone,first).size();
+        return new Pair(first[0], all);
+    }
+
+    /**
+     * 迭代查询所有子孙节点并添加到结果集
+     * @param result
+     * @param phones
+     * @param isPhone
+     */
+    private int findAndAdd(Queue<InviteRelationEntity> result, Queue<String> phones, boolean isPhone) {
+        final Executor executor = this.executor;//获取线程池
         if(isPhone) {
-            List<InviteRelationEntity> first = relationDao.findChildByPhone(phones.poll());
-            if(first.size() != 0){
-                result.addAll(first);
-                for(InviteRelationEntity entity : first){
-                    phones.offer(entity.getChildPlayerPhone());
-                }
-            }
-            System.out.println(phones.size());
+            int first = findDirectSuccessor(result, phones);
             while(!phones.isEmpty()){
                 final String phone = phones.poll();
                 executor.execute(()->{
@@ -77,8 +102,8 @@ public class InviteServiceImpl implements InviteService {
                         }
                     }
                 });
-
             }
+            return first;
         }else{
             while(!phones.isEmpty()){
                 String phone = phones.poll();
@@ -90,7 +115,20 @@ public class InviteServiceImpl implements InviteService {
                     }
                 }
             }
+            return 0;//暂时
         }
+    }
+
+    private int findDirectSuccessor(Queue<InviteRelationEntity> result, Queue<String> phones) {
+        List<InviteRelationEntity> first = relationDao.findChildByPhone(phones.poll());
+        if(first.size() != 0){
+            result.addAll(first);
+            for(InviteRelationEntity entity : first){
+                phones.offer(entity.getChildPlayerPhone());
+            }
+        }
+        System.out.println(phones.size());
+        return first.size();
     }
 
     /**
@@ -165,6 +203,4 @@ public class InviteServiceImpl implements InviteService {
         nowNodes = nextNodes;
         return result;
     }
-
-
 }
