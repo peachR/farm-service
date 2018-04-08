@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yiyi.farm.dao.invite.InviteInfoDao">
+    <resultMap id="inviteInfoMap" type="com.yiyi.farm.entity.invite.InviteInfoEntity">
+        <id column="id" property="id" />
+        <result column="uid" property="uid" />
+        <result column="phone" property="phone" />
+        <result column="player_id" property="playerId" />
+        <result column="server_id" property="serverId" />
+        <result column="up_player_uid" property="upPlayerUid" />
+        <result column="up_player_phone" property="upPlayerPhone" />
+        <result column="time" property="time" typeHandler="com.yiyi.farm.typehandler.TimeHandler"/>
+    </resultMap>
+
+    <select id="findRoots" resultMap="inviteInfoMap">
+        SELECT phone,uid,player_id,server_id FROM farm_center.invite_code WHERE uid in(
+        SELECT DISTINCT(up_player_uid) FROM farm_center.invite_info WHERE up_player_uid not in (SELECT uid FROM farm_center.invite_info) ORDER BY up_player_uid)
+    </select>
+
+    <select id="findChilds" resultMap="inviteInfoMap">
+        SELECT phone,uid,player_id,server_id,up_player_uid,up_player_phone,time FROM farm_center.invite_info WHERE up_player_uid = #{uid}
+    </select>
+
+</mapper>

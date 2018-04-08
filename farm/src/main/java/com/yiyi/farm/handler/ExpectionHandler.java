@@ -44,6 +44,7 @@ public class ExpectionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result sysException(Exception exp){
+        exp.printStackTrace();
         return Result.newFailureResult();
     }
 }

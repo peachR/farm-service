@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yiyi.farm.dao.invite.InviteRelationDao">
+    <resultMap id="relationMap" type="com.yiyi.farm.entity.invite.InviteRelationEntity">
+        <result property="id" column="id"/>
+        <result property="uid" column="uid"/>
+        <result property="phone" column="phone"/>
+        <result property="playerId" column="player_id"/>
+        <result property="serverId" column="server_id"/>
+        <result property="upPlayerUid" column="up_player_uid"/>
+        <result property="upPlayerPhone" column="up_player_phone"/>
+        <result property="time" column="time" typeHandler="com.yiyi.farm.typehandler.TimeHandler"/>
+        <result property="childPlayerUid" column="child_player_uid"/>
+        <result property="childPlayerPhone" column="child_player_phone"/>
+        <result property="high" column="high"/>
+    </resultMap>
+
+    <sql id="relationTreeModel">
+      invite.relationTree.id,invite.relationTree.uid,invite.relationTree.phone,invite.relationTree.player_id,invite.relationTree.server_id,
+      invite.relationTree.up_player_uid,invite.relationTree.up_player_phone,invite.relationTree.time,invite.relationTree.child_player_uid,
+      invite.relationTree.child_player_phone,invite.relationTree.high
+    </sql>
+
+    <insert id="insertRelation">
+        INSERT INTO invite.relationTree(uid,phone,player_id,server_id,up_player_uid,up_player_phone,time,child_player_uid,child_player_phone,high)
+        VALUES
+        <if test="relationList != null and relationList.size() != 0">
+            <foreach collection="relationList" item="item" index="index" separator=",">
+                (#{item.uid},#{item.phone},#{item.playerId},#{item.serverId},#{item.upPlayerUid},#{item.upPlayerPhone},#{item.time},#{item.childPlayerUid},#{item.childPlayerPhone},#{item.high})
+            </foreach>
+        </if>
+    </insert>
+
+    <select id="findChildByPhone" resultMap="relationMap">
+        SELECT
+        <include refid="relationTreeModel"/>
+        FROM invite.relationTree
+        WHERE invite.relationTree.phone=#{phone}
+    </select>
+
+    <select id="findChildByUid" resultMap="relationMap">
+        SELECT
+        <include refid="relationTreeModel"/>
+        FROM invite.relationTree
+        WHERE invite.relationTree.uid=#{uid}
+    </select>
+</mapper>

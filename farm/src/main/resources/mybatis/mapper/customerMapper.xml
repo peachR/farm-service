@@ -10,7 +10,9 @@
         <result property="name" column="name"/>
         <result property="hongbao" column="hongbao"/>
 
-
     </resultMap>
+    <select id="findCustomerInfo" resultMap="customerMap">
+        SELECT * FROM farm.center.player_name
+    </select>
 
 </mapper>
