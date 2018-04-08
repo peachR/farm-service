@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -28,13 +30,13 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleFindChildByPhone(InviteReq invite) {
-        List<InviteRelationEntity> list = inviteService.findChildByPhone(invite.getPhone());
+        Queue<InviteRelationEntity> list = inviteService.findChildByPhone(invite.getPhone());
         return Result.newSuccessResult(list);
     }
 
     @Override
     public Result handleFindChildByUid(InviteReq invite) {
-        List<InviteRelationEntity> list = inviteService.findChildByPhone(invite.getUid());
+        Queue<InviteRelationEntity> list = inviteService.findChildByPhone(invite.getUid());
         return Result.newSuccessResult(list);
     }
 
