@@ -34,5 +34,7 @@ public interface CustomerInformationController {
     @GetMapping("/info")
     public Result<List<CustomerEntity>> findInformationInPage(InformationReq inforeq);
 
+    @GetMapping("/{phone}")
+    Result<CustomerEntity> getCustInfoByPhone(@PathVariable("phone") String phone);
 
 }

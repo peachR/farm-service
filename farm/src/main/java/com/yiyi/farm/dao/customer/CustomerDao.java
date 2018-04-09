@@ -10,4 +10,10 @@ import java.util.List;
 @Mapper
 public interface CustomerDao {
     public List<CustomerEntity> findCustomerInfo(@Param("infoReq")InformationReq infoReq);
+
+    Integer getServerOfCust(String phone);
+
+    CustomerEntity getCustFromServer1(String phone);
+
+    CustomerEntity getCustFromServer2(String phone);
 }

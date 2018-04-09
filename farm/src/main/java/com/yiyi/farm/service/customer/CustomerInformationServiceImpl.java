@@ -28,6 +28,22 @@ public class CustomerInformationServiceImpl implements CustomerInformationServic
         return customerDao.findCustomerInfo(infoReq);
     }
 
+    @Override
+    public CustomerEntity getCustInfoByPhone(String phone) {
+        Integer server = customerDao.getServerOfCust(phone);
+        CustomerEntity customer = null;
+        if(server == 1){
+             customer = customerDao.getCustFromServer1(phone);
+            customer.setPhone(phone);
+            customer.setServer_id(1);
+        }else if(server == 2){
+             customer = customerDao.getCustFromServer2(phone);
+            customer.setPhone(phone);
+            customer.setServer_id(2);
+        }
+        return customer;
+    }
+
     private <T> void checkParam(T req, ExpCodeEnum expCodeEnum){
         if(req == null)
             throw new CommonException(expCodeEnum);

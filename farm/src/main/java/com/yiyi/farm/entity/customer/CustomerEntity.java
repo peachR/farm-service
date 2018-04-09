@@ -3,7 +3,7 @@ package com.yiyi.farm.entity.customer;
 import java.sql.Timestamp;
 
 public class CustomerEntity {
-    private Integer uid;    //用户id
+    private String uid;    //用户id
     private Integer server_id;  //服务器id
     private String phone;   //手机号
     private Timestamp time;   //注册时间
@@ -14,11 +14,11 @@ public class CustomerEntity {
     private Boolean closed;    //封号
     private Boolean customer_account;   //客服账号
 
-    public Integer getUid() {
+    public String getUid() {
         return uid;
     }
 
-    public void setUid(Integer uid) {
+    public void setUid(String uid) {
         this.uid = uid;
     }
 

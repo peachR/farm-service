@@ -15,4 +15,18 @@
         SELECT * FROM farm.center.player_name
     </select>
 
+    <select id="getServerOfCust" resultType="java.lang.Integer" parameterType="java.lang.String">
+      SELECT case(SELECT count(farm_edu.player.id) from farm_edu.player where farm_edu.player.nickname=#{phone})
+      WHEN 1 then 1 when 0 then 2 end
+    </select>
+    
+    <select id="getCustFromServer1" parameterType="java.lang.String" resultMap="customerMap">
+        select farm_log.log_register.uid as player_id,farm_log.log_register.time as register_time,farm_edu.player.`name` as name,farm_edu.player.money,farm_edu.player.diamond from farm_edu.player,farm_log.log_register
+        where farm_edu.player.nickname=#{phone} and farm_log.log_register.phone=#{phone}
+    </select>
+
+    <select id="getCustFromServer2" parameterType="java.lang.String" resultMap="customerMap">
+        select farm_log.log_register.uid as player_id,farm_log.log_register.time as register_time,farm_edu_s02.player.`name` as name,farm_edu_s02.player.money,farm_edu_s02.player.diamond from farm_edu_s02.player,farm_log.log_register
+where farm_edu_s02.player.nickname=#{phone} and farm_log.log_register.phone=#{phone}
+    </select>
 </mapper>

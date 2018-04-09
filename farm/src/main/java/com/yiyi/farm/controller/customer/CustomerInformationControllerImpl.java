@@ -7,6 +7,7 @@ import com.yiyi.farm.facade.customer.CustomerInformationService;
 import com.yiyi.farm.req.information.InformationReq;
 import com.yiyi.farm.rsp.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -31,5 +32,11 @@ public class CustomerInformationControllerImpl implements CustomerInformationCon
     public Result<List<CustomerEntity>> findInformationInPage(InformationReq inforeq) {
         List<CustomerEntity> infoList = infoService.findCustomerInfo(inforeq);
         return Result.newSuccessResult(infoList);
+    }
+
+    @Override
+    public Result<CustomerEntity> getCustInfoByPhone(@PathVariable("phone") String phone) {
+        CustomerEntity customer = infoService.getCustInfoByPhone(phone);
+        return Result.newSuccessResult(customer);
     }
 }

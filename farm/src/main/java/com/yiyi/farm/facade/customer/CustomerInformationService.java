@@ -11,4 +11,6 @@ public interface CustomerInformationService {
 
     List<CustomerEntity> findCustomerInfo(InformationReq infoReq);
 
+    CustomerEntity getCustInfoByPhone(String phone);
+
 }
