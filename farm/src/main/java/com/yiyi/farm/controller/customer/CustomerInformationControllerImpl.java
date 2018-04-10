@@ -35,7 +35,7 @@ public class CustomerInformationControllerImpl implements CustomerInformationCon
     }
 
     @Override
-    public Result<CustomerEntity> getCustInfoByPhone(@PathVariable("phone") String phone) {
+    public Result<CustomerEntity> findCustInfoByPhone(@PathVariable("phone") String phone) {
         CustomerEntity customer = infoService.getCustInfoByPhone(phone);
         return Result.newSuccessResult(customer);
     }

@@ -193,27 +193,43 @@ public class InviteServiceImpl implements InviteService {
         for(Map.Entry<InviteInfoEntity, List<InviteInfoEntity>> entry: sets){
             InviteInfoEntity parent = entry.getKey();
             List<InviteInfoEntity> children = entry.getValue();
-            for(InviteInfoEntity child : children){//每个invite节点有一个孩子就有一个对应的关系节点
-                InviteRelationEntity node = new InviteRelationEntity();
-                node.setChildPlayerUid(child.getUid());
-                node.setChildPlayerPhone(child.getPhone());
-                node.setUpPlayerPhone(parent.getUpPlayerPhone());
-                node.setUpPlayerUid(parent.getUpPlayerUid());
-                node.setServerId(parent.getServerId());
-                node.setPlayerId(parent.getPlayerId());
-                node.setUid(parent.getUid());
-                node.setPhone(parent.getPhone());
-                node.setTime(child.getTime());
-                node.setHigh(parent.getHigh());
-                result.add(node);
-                if(result.size() > 1000){
-                    relationDao.insertRelation(result);
-                    result = new ArrayList<>();
+            if(children == null || children.size() == 0){
+                buildRelationAndAdd(result, parent, null);
+            }else {
+                for (InviteInfoEntity child : children) {//每个invite节点有一个孩子就有一个对应的关系节点
+                    buildRelationAndAdd(result, parent, child);
+                    if (result.size() > 1000) {
+                        relationDao.insertRelation(result);
+                        result = new ArrayList<>();
+                    }
+                    nextNodes.add(child);//记录孩子节点集合作为下一次迭代的父节点
                 }
-                nextNodes.add(child);//记录孩子节点集合作为下一次迭代的父节点
             }
         }
         nowNodes = nextNodes;
         return result;
+    }
+
+    /**
+     * 创建关系节点并加入带插入队列
+     * @param result
+     * @param parent
+     * @param child
+     */
+    private void buildRelationAndAdd(List<InviteRelationEntity> result, InviteInfoEntity parent, InviteInfoEntity child) {
+        if(child == null)
+            child = new InviteInfoEntity();
+        InviteRelationEntity node = new InviteRelationEntity();
+        node.setChildPlayerUid(child.getUid());
+        node.setChildPlayerPhone(child.getPhone());
+        node.setUpPlayerPhone(parent.getUpPlayerPhone());
+        node.setUpPlayerUid(parent.getUpPlayerUid());
+        node.setServerId(parent.getServerId());
+        node.setPlayerId(parent.getPlayerId());
+        node.setUid(parent.getUid());
+        node.setPhone(parent.getPhone());
+        node.setTime(child.getTime());
+        node.setHigh(parent.getHigh());
+        result.add(node);
     }
 }
