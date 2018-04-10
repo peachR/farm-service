@@ -44,7 +44,7 @@ public class InviteServiceImpl implements InviteService {
         Queue<InviteRelationEntity> result = new ConcurrentLinkedQueue<>();
         Queue<String> id = new ConcurrentLinkedQueue<>();
         id.offer(phone);
-        first[0] = findAndAdd(result, id, true);
+        first[0] = findAndAdd(result, id, true);//获取直接孩子的个数
         return result;
     }
 
@@ -90,8 +90,8 @@ public class InviteServiceImpl implements InviteService {
     private int findAndAdd(Queue<InviteRelationEntity> result, Queue<String> phones, boolean isPhone) {
         final Executor executor = this.executor;//获取线程池
         if(isPhone) {
-            int first = findDirectSuccessor(result, phones);
-            while(!phones.isEmpty()){
+            int first = findDirectSuccessor(result, phones);//将直接孩子加入结果队列，同时将孩子作为下一级的父节点加入phones队列，返回直接孩子的个数
+            while(!phones.isEmpty()){//多线程迭代查询
                 final String phone = phones.poll();
                 executor.execute(()->{
                     List<InviteRelationEntity> now = relationDao.findChildByPhone(phone);
@@ -119,6 +119,12 @@ public class InviteServiceImpl implements InviteService {
         }
     }
 
+    /**
+     * 寻找直接孩子
+     * @param result
+     * @param phones
+     * @return 直接孩子个数
+     */
     private int findDirectSuccessor(Queue<InviteRelationEntity> result, Queue<String> phones) {
         List<InviteRelationEntity> first = relationDao.findChildByPhone(phones.poll());
         if(first.size() != 0){
@@ -136,7 +142,9 @@ public class InviteServiceImpl implements InviteService {
      * @return
      */
     private List<InviteInfoEntity> findRoots() {
-        return infoDao.findRoots();
+        List<InviteInfoEntity> roots = infoDao.findRoots();
+        roots.parallelStream().forEach(root -> root.setHigh(1));
+        return roots;
     }
 
     /**
@@ -146,7 +154,11 @@ public class InviteServiceImpl implements InviteService {
      */
     private Map<InviteInfoEntity, List<InviteInfoEntity>> findChild(List<InviteInfoEntity> parents) {
         Map<InviteInfoEntity, List<InviteInfoEntity>> relationMap = new ConcurrentHashMap<>();
-        parents.parallelStream().forEach(info -> relationMap.put(info, infoDao.findChilds(info.getUid())));
+        parents.parallelStream().forEach(info -> {
+            List<InviteInfoEntity> childs = infoDao.findChilds(info.getUid());
+            childs.parallelStream().forEach(child -> child.setHigh(info.getHigh() + 1));
+            relationMap.put(info, childs);
+        });
         return relationMap;
     }
 
@@ -192,6 +204,7 @@ public class InviteServiceImpl implements InviteService {
                 node.setUid(parent.getUid());
                 node.setPhone(parent.getPhone());
                 node.setTime(child.getTime());
+                node.setHigh(parent.getHigh());
                 result.add(node);
                 if(result.size() > 1000){
                     relationDao.insertRelation(result);

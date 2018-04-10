@@ -22,6 +22,8 @@ public class InviteInfoEntity implements Serializable {
 
     private Timestamp time;
 
+    private Integer high;
+
     public Integer getId() {
         return id;
     }
@@ -86,6 +88,13 @@ public class InviteInfoEntity implements Serializable {
         this.time = time;
     }
 
+    public Integer getHigh() {
+        return high;
+    }
+
+    public void setHigh(Integer high) {
+        this.high = high;
+    }
 
     @Override
     public boolean equals(Object o) {
