@@ -61,6 +61,14 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- devtools 热部署-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<!-- 依赖不传递，之后依赖该项目的项目如想使用devtools则需要重新引入 -->
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>
