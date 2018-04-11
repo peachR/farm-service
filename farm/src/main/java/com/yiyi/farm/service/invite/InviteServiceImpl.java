@@ -120,7 +120,7 @@ public class InviteServiceImpl implements InviteService {
         }
     }
 
-    public Map<Integer,PosterityStatistics> findRelationNumberMap(String phone){
+    public List<PosterityStatistics> findRelationNumberMap(String phone){
         int high = 0;
         Map<Integer,PosterityStatistics> map = new LinkedHashMap<>();
         List<InviteRelationEntity> children = relationDao.findChildrenByPhone(phone);
@@ -133,7 +133,7 @@ public class InviteServiceImpl implements InviteService {
         map.put(++high,new PosterityStatistics(children.size(),valid));
         valid=0;
         if(children.size()==0){
-            return map;
+            return new ArrayList<>();
         }
         Queue<String> phones = new LinkedList<>();
         for(InviteRelationEntity entity : children){
@@ -164,7 +164,12 @@ public class InviteServiceImpl implements InviteService {
             valid0 += node.getValid();
         }
         map.put(0,new PosterityStatistics(total0,valid0));
-        return map;
+        List<PosterityStatistics> result = new ArrayList<>();
+        result.add(map.get(0));
+        for(int i = 1; i < map.size()-1;i++){
+            result.add(map.get(i));
+        }
+        return result;
     }
 
     /**

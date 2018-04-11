@@ -17,5 +17,5 @@ public interface InviteService {
     Queue<InviteRelationEntity> findChildByPhone(String phone);
     Queue<InviteRelationEntity> findChildByUid(String uid);
     Pair findChildNumbersByPhone(String phone);
-    Map<Integer,PosterityStatistics> findRelationNumberMap(String phone);
+    List<PosterityStatistics> findRelationNumberMap(String phone);
 }
