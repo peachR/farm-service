@@ -52,4 +52,10 @@ public class InviteControllerImpl implements InviteController {
         return Result.newSuccessResult(list);
     }
 
+    @Override
+    public Result handleposterityStatistics(InviteReq invite) {
+        String[] phones = invite.getPhone();
+        return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0]));
+    }
+
 }

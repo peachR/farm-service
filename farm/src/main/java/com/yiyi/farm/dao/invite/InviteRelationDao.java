@@ -11,4 +11,6 @@ public interface InviteRelationDao {
     public void insertRelation(@Param("relationList")List<InviteRelationEntity> relation);
     public List<InviteRelationEntity> findChildByPhone(@Param("phone") String phone);
     public List<InviteRelationEntity> findChildByUid(@Param("uid") String uid);
+    List<InviteRelationEntity> findChildrenByPhone(@Param("phone") String phone);
+    Integer checkValidCustomer(@Param("phone") String phone);
 }

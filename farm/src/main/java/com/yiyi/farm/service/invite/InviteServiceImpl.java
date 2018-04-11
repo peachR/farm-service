@@ -6,6 +6,7 @@ import com.yiyi.farm.entity.invite.InviteInfoEntity;
 import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.facade.invite.InviteService;
 import com.yiyi.farm.tool.Pair;
+import com.yiyi.farm.tool.PosterityStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -117,6 +118,53 @@ public class InviteServiceImpl implements InviteService {
             }
             return 0;//暂时
         }
+    }
+
+    public Map<Integer,PosterityStatistics> findRelationNumberMap(String phone){
+        int high = 0;
+        Map<Integer,PosterityStatistics> map = new LinkedHashMap<>();
+        List<InviteRelationEntity> children = relationDao.findChildrenByPhone(phone);
+        int valid = 0;
+        for(InviteRelationEntity entity : children){
+            if(relationDao.checkValidCustomer(entity.getChildPlayerPhone())>0){
+                valid++;
+            }
+        }
+        map.put(++high,new PosterityStatistics(children.size(),valid));
+        valid=0;
+        if(children.size()==0){
+            return map;
+        }
+        Queue<String> phones = new LinkedList<>();
+        for(InviteRelationEntity entity : children){
+            phones.offer(entity.getChildPlayerPhone());
+        }
+        while (children.size()!=0){
+            List<InviteRelationEntity> tempChild = new ArrayList<>();
+            while (phones.size()!=0){
+                tempChild.addAll(relationDao.findChildrenByPhone(phones.poll()));
+            }
+            for(InviteRelationEntity entity : tempChild){
+                if(relationDao.checkValidCustomer(entity.getChildPlayerPhone())>0){
+                    valid++;
+                }
+            }
+            map.put(++high,new PosterityStatistics(tempChild.size(),valid));
+            valid=0;
+            phones.clear();
+            for(InviteRelationEntity entity : tempChild){
+                phones.offer(entity.getChildPlayerPhone());
+            }
+            children = tempChild;
+        }
+        int total0 = 0;
+        int valid0 = 0;
+        for(PosterityStatistics node : map.values()){
+            total0 += node.getTotal();
+            valid0 += node.getValid();
+        }
+        map.put(0,new PosterityStatistics(total0,valid0));
+        return map;
     }
 
     /**
@@ -232,4 +280,7 @@ public class InviteServiceImpl implements InviteService {
         node.setHigh(parent.getHigh());
         result.add(node);
     }
+
+
+
 }

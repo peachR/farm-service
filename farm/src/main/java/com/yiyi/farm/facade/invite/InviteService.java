@@ -3,6 +3,7 @@ package com.yiyi.farm.facade.invite;
 import com.yiyi.farm.entity.invite.InviteInfoEntity;
 import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.tool.Pair;
+import com.yiyi.farm.tool.PosterityStatistics;
 
 import java.util.List;
 import java.util.Map;
@@ -16,4 +17,5 @@ public interface InviteService {
     Queue<InviteRelationEntity> findChildByPhone(String phone);
     Queue<InviteRelationEntity> findChildByUid(String uid);
     Pair findChildNumbersByPhone(String phone);
+    Map<Integer,PosterityStatistics> findRelationNumberMap(String phone);
 }

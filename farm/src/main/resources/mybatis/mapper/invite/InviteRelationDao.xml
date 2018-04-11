@@ -44,4 +44,16 @@
         FROM invite.relationTree
         WHERE invite.relationTree.uid=#{uid}
     </select>
+    
+    <select id="findChildrenByPhone" resultMap="relationMap">
+        SELECT
+        <include refid="relationTreeModel"/>
+        FROM invite.relationTree
+        WHERE invite.relationTree.phone=#{phone}
+        AND invite.relationTree.child_player_phone IS NOT NULL
+    </select>
+    
+    <select id="checkValidCustomer" resultType="int">
+        SELECT count(1) FROM farm_log.log_consume where phone=#{phone};
+    </select>
 </mapper>
