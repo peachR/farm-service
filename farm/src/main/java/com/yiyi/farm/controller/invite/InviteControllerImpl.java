@@ -55,7 +55,7 @@ public class InviteControllerImpl implements InviteController {
     @Override
     public Result handleposterityStatistics(InviteReq invite) {
         String[] phones = invite.getPhone();
-        return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0]));
+        return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0],invite.getTotalConsume(),invite.getChargeConsume()));
     }
 
 }

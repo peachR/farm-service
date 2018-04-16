@@ -53,7 +53,15 @@
         AND invite.relationTree.child_player_phone IS NOT NULL
     </select>
     
-    <select id="checkValidCustomer" resultType="int">
-        SELECT count(1) FROM farm_log.log_consume where phone=#{phone};
+    <select id="checkValidCustomer" resultType="map">
+        SELECT COALESCE(SUM(c.money),0) as total,COALESCE(SUM(c.yuer),0) as charge from farm_log.log_consume as c where phone=#{phone};
     </select>
+
+    <delete id="clearRelation">
+        TRUNCATE TABLE invite.relationtree;
+    </delete>
+
+    <insert id="recordRefreshTime">
+        INSERT INTO invite.refreshtime (time) VALUE (now())
+    </insert>
 </mapper>

@@ -10,6 +10,7 @@ import com.yiyi.farm.tool.PosterityStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -33,7 +34,17 @@ public class InviteServiceImpl implements InviteService {
      * 初始化关系树
      */
     public void init(){
+        clearRelation();
         insertRelation();
+        recordTime();
+    }
+
+    private void recordTime() {
+        relationDao.recordRefreshTime();
+    }
+
+    private void clearRelation() {
+        relationDao.clearRelation();
     }
 
     /**
@@ -120,13 +131,13 @@ public class InviteServiceImpl implements InviteService {
         }
     }
 
-    public List<PosterityStatistics> findRelationNumberMap(String phone){
+    public List<PosterityStatistics> findRelationNumberMap(String phone,int totalConsume,int chargeConsume){
         int high = 0;
         Map<Integer,PosterityStatistics> map = new LinkedHashMap<>();
         List<InviteRelationEntity> children = relationDao.findChildrenByPhone(phone);
         int valid = 0;
         for(InviteRelationEntity entity : children){
-            if(relationDao.checkValidCustomer(entity.getChildPlayerPhone())>0){
+            if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
                 valid++;
             }
         }
@@ -145,7 +156,7 @@ public class InviteServiceImpl implements InviteService {
                 tempChild.addAll(relationDao.findChildrenByPhone(phones.poll()));
             }
             for(InviteRelationEntity entity : tempChild){
-                if(relationDao.checkValidCustomer(entity.getChildPlayerPhone())>0){
+                if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
                     valid++;
                 }
             }
@@ -171,7 +182,13 @@ public class InviteServiceImpl implements InviteService {
         }
         return result;
     }
-
+    private boolean checkValid(String phone,int totalConsume,int chargeConsume){
+        Map<String,BigDecimal> result = relationDao.checkValidCustomer(phone);
+        if(result.get("total").intValue() > totalConsume && result.get("charge").intValue() > chargeConsume){
+            return true;
+        }
+        return false;
+    }
     /**
      * 寻找直接孩子
      * @param result
