@@ -5,6 +5,7 @@ import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -18,4 +19,5 @@ public interface InviteService {
     Queue<InviteRelationEntity> findChildByUid(String uid);
     Pair findChildNumbersByPhone(String phone);
     List<PosterityStatistics> findRelationNumberMap(String phone,int totalConsume,int chargeConsume);
+    Map<String,Integer> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume);
 }

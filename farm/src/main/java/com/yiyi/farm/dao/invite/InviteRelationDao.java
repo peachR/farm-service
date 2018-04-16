@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -17,4 +18,7 @@ public interface InviteRelationDao {
     Map<String,BigDecimal> checkValidCustomer(@Param("phone") String phone);
     void clearRelation();
     Integer recordRefreshTime();
+    List<InviteRelationEntity> findChildrenByPhoneWithTime(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
+    Integer findTotalCharge(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
+    Map<String,BigDecimal> findConsume(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
 }

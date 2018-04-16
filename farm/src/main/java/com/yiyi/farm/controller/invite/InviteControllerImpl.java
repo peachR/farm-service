@@ -8,6 +8,7 @@ import com.yiyi.farm.tool.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,14 @@ public class InviteControllerImpl implements InviteController {
     public Result handleposterityStatistics(InviteReq invite) {
         String[] phones = invite.getPhone();
         return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0],invite.getTotalConsume(),invite.getChargeConsume()));
+    }
+
+    @Override
+    public Result handleredEnvelopeCalc(InviteReq invite) {
+        String[] phones = invite.getPhone();
+        int startTime = invite.getStartTime();
+        int endTime = invite.getEndTime();
+        return Result.newSuccessResult(inviteService.findRedEnvelopeCalc(phones[0],startTime,endTime,invite.getTotalConsume(),invite.getChargeConsume()));
     }
 
 }

@@ -21,4 +21,7 @@ public interface InviteController {
 
     @GetMapping("posterityStatistics")
     Result handleposterityStatistics(InviteReq invite);
+
+    @GetMapping("redEnvelope")
+    Result handleredEnvelopeCalc(InviteReq invite);
 }

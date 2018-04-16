@@ -2,12 +2,15 @@ package com.yiyi.farm.req.invite;
 
 import com.yiyi.farm.req.AbstractReq;
 
+import java.sql.Timestamp;
+
 public class InviteReq extends AbstractReq {
     private String[] phone;
     private String[] uid;
     private int totalConsume;
     private int chargeConsume;
-
+    private int startTime;
+    private int endTime;
 
     public String[] getPhone() {
         return phone;
@@ -39,5 +42,21 @@ public class InviteReq extends AbstractReq {
 
     public void setUid(String[] uid) {
         this.uid = uid;
+    }
+
+    public int getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(int startTime) {
+        this.startTime = startTime;
+    }
+
+    public int getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(int endTime) {
+        this.endTime = endTime;
     }
 }
