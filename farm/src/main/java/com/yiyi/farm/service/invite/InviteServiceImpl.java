@@ -10,6 +10,8 @@ import com.yiyi.farm.tool.PosterityStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.websocket.Session;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
@@ -135,39 +137,29 @@ public class InviteServiceImpl implements InviteService {
     public List<PosterityStatistics> findRelationNumberMap(String phone,int totalConsume,int chargeConsume){
         int high = 0;
         Map<Integer,PosterityStatistics> map = new LinkedHashMap<>();
-        List<InviteRelationEntity> children = relationDao.findChildrenByPhone(phone);
-        int valid = 0;
-        for(InviteRelationEntity entity : children){
-            if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
-                valid++;
-            }
-        }
-        map.put(++high,new PosterityStatistics(children.size(),valid));
-        valid=0;
-        if(children.size()==0){
-            return new ArrayList<>();
-        }
         Queue<String> phones = new LinkedList<>();
-        for(InviteRelationEntity entity : children){
-            phones.offer(entity.getChildPlayerPhone());
-        }
-        while (children.size()!=0){
+        phones.offer(phone);
+        while (phones.size()!=0){
             List<InviteRelationEntity> tempChild = new ArrayList<>();
             while (phones.size()!=0){
-                tempChild.addAll(relationDao.findChildrenByPhone(phones.poll()));
+                tempChild.addAll(relationDao.findChildByPhone(phones.poll()));
             }
+
+            phones.clear();
             for(InviteRelationEntity entity : tempChild){
-                if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
+                if(entity.getChildPlayerPhone()!=null){
+                    phones.offer(entity.getChildPlayerPhone());
+                }
+            }
+            int total = 0;
+            int valid = 0;
+            for(String s : phones){
+                total++;
+                if(checkValid(s,totalConsume,chargeConsume)){
                     valid++;
                 }
             }
-            map.put(++high,new PosterityStatistics(tempChild.size(),valid));
-            valid=0;
-            phones.clear();
-            for(InviteRelationEntity entity : tempChild){
-                phones.offer(entity.getChildPlayerPhone());
-            }
-            children = tempChild;
+            map.put(++high,new PosterityStatistics(total,valid));
         }
         int total0 = 0;
         int valid0 = 0;
@@ -185,7 +177,14 @@ public class InviteServiceImpl implements InviteService {
     }
 
     @Override
-    public Map<String, String> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume) {
+    public Map<String, String> findRedEnvelopeCalc(String phone, int startTime, int endTime, int totalConsume, int chargeConsume) {
+//        Timer timer = new Timer();
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println();
+//            }
+//        }, 0, 1000);
         Map<String,String> result = new HashMap<>();
         Integer newCustomer = 0;
         Integer newValidCustomer = 0;
@@ -193,53 +192,40 @@ public class InviteServiceImpl implements InviteService {
         Integer newTotalConsume = 0;
         Integer newTotalConsumeFromCharge = 0;
 
-        List<InviteRelationEntity> children = relationDao.findChildrenByPhoneWithTime(phone,startTime,endTime);
-        for(InviteRelationEntity entity : children){
-            //新增用户
-            newCustomer++;
-            //新增有效用户
-            if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
-                newValidCustomer++;
-            }
-            //总充值金额
-            newTotalCharge += relationDao.findTotalCharge(entity.getChildPlayerPhone(),startTime,endTime);
-            //总消费金额
-            Map<String,BigDecimal> consume = relationDao.findConsume(entity.getChildPlayerPhone(),startTime,endTime);
-            newTotalConsume += consume.get("total").intValue();
-            //总消费充值金额
-            newTotalConsumeFromCharge += consume.get("charge").intValue();
-        }
 
         Queue<String> phones = new LinkedList<>();
-        for(InviteRelationEntity entity : children){
-            phones.offer(entity.getChildPlayerPhone());
-        }
-
-        while (children.size()!=0){
+        phones.offer(phone);
+        System.out.println(phones.size());
+        while (phones.size()!=0){
             List<InviteRelationEntity> tempChild = new ArrayList<>();
             while (phones.size()!=0){
-                tempChild.addAll(relationDao.findChildrenByPhone(phones.poll()));
+                tempChild.addAll(relationDao.findChildByPhone(phones.poll()));
             }
-            for(InviteRelationEntity entity : tempChild){
-                //新增用户
-                newCustomer++;
-                //新增有效用户
-                if(checkValid(entity.getChildPlayerPhone(),totalConsume,chargeConsume)){
-                    newValidCustomer++;
-                }
-                //总充值金额
-                newTotalCharge += relationDao.findTotalCharge(entity.getChildPlayerPhone(),startTime,endTime);
-                //总消费金额
-                Map<String,BigDecimal> consume = relationDao.findConsume(entity.getChildPlayerPhone(),startTime,endTime);
-                newTotalConsume += consume.get("total").intValue();
-                //总消费充值金额
-                newTotalConsumeFromCharge += consume.get("charge").intValue();
-            }
+
             phones.clear();
             for(InviteRelationEntity entity : tempChild){
-                phones.offer(entity.getChildPlayerPhone());
+                if(entity.getChildPlayerPhone()!=null){
+                    phones.offer(entity.getChildPlayerPhone());
+                }
             }
-            children = tempChild;
+            System.out.println(phones.size());
+            for(String s : phones){
+                //新增用户
+                if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+                    newCustomer++;
+                    //新增的有效用户
+                    if(checkValid(s,totalConsume,chargeConsume)){
+                        newValidCustomer++;
+                    }
+                }
+                //本期用户充值总额
+                newTotalCharge += relationDao.findTotalCharge(s,startTime,endTime);
+                //本期用户消费总额
+                Map<String,BigDecimal> consume = relationDao.findConsume(s,startTime,endTime);
+                newTotalConsume += consume.get("total").intValue();
+                //本期用户消费的充值金额
+                newTotalConsumeFromCharge += consume.get("charge").intValue();
+            }
         }
         result.put("phone",phone);
         result.put("newCustomer",newCustomer.toString());

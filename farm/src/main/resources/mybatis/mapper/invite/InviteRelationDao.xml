@@ -85,4 +85,8 @@
     <select id="findRefreshTime" resultType="java.lang.String">
         SELECT time FROM invite.refreshtime ORDER BY time
     </select>
+    
+    <select id="isNewCustomer" resultType="int">
+        SELECT count(1) FROM farm_center.invite_info WHERE phone=#{phone} AND time BETWEEN #{startTime} AND #{endTime}
+    </select>
 </mapper>

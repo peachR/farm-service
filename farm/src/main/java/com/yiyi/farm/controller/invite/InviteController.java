@@ -4,6 +4,8 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.rsp.Result;
 import org.springframework.web.bind.annotation.*;
 
+import javax.websocket.Session;
+
 @RestController
 @RequestMapping(value="/invite")
 public interface InviteController {

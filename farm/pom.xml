@@ -69,6 +69,11 @@
 			<!-- 依赖不传递，之后依赖该项目的项目如想使用devtools则需要重新引入 -->
 			<optional>true</optional>
 		</dependency>
+		<!--socket-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
