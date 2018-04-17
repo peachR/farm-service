@@ -30,14 +30,14 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleFindChildByPhone(InviteReq invite) {
-        String[] phones = invite.getPhone();
+        String[] phones = invite.getPhone().trim().split(";");
         Queue<InviteRelationEntity> list = inviteService.findChildByPhone(phones[0]);
         return Result.newSuccessResult(list);
     }
 
     @Override
     public Result handleFindChildNumberByPhone(InviteReq invite) {
-        String[] phones = invite.getPhone();
+        String[] phones = invite.getPhone().trim().split(";");
         Map<String, Pair> map = new ConcurrentHashMap<>();
         Stream.of(phones).parallel().forEach(phone -> map.put(phone, inviteService.findChildNumbersByPhone(phone)));
         System.out.println(map);
@@ -53,13 +53,13 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleposterityStatistics(InviteReq invite) {
-        String[] phones = invite.getPhone();
+        String[] phones = invite.getPhone().trim().split(";");
         return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0],invite.getTotalConsume(),invite.getChargeConsume()));
     }
 
     @Override
     public Result handleredEnvelopeCalc(InviteReq invite) {
-        String[] phones = invite.getPhone();
+        String[] phones = invite.getPhone().trim().split(";");
         int startTime = invite.getStartTime();
         int endTime = invite.getEndTime();
         List<Map<String,String>> result = new ArrayList<>();

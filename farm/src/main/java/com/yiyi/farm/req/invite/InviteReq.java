@@ -5,14 +5,14 @@ import com.yiyi.farm.req.AbstractReq;
 import java.sql.Timestamp;
 
 public class InviteReq extends AbstractReq {
-    private String[] phone;
+    private String phone;
     private String[] uid;
     private int totalConsume;
     private int chargeConsume;
     private int startTime;
     private int endTime;
 
-    public String[] getPhone() {
+    public String getPhone() {
         return phone;
     }
 
@@ -32,7 +32,7 @@ public class InviteReq extends AbstractReq {
         this.totalConsume = totalConsume;
     }
 
-    public void setPhone(String[] phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 

@@ -88,6 +88,7 @@ public class CacheService extends CachingConfigurerSupport{
 
     /**
      * redisTemplate配置
+     * 使用json序列化的方式
      *
      * @param factory
      * @return
@@ -96,11 +97,14 @@ public class CacheService extends CachingConfigurerSupport{
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory factory) {
         StringRedisTemplate template = new StringRedisTemplate(factory);
+        //使用Jackson2将对象序列化为json
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+        //json转对象类，默认会将json转为hashMap
         ObjectMapper om = new ObjectMapper();
         om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
         jackson2JsonRedisSerializer.setObjectMapper(om);
+        //值序列化为json
         template.setValueSerializer(jackson2JsonRedisSerializer);
         template.afterPropertiesSet();
         return template;
