@@ -62,7 +62,7 @@
     </delete>
 
     <insert id="recordRefreshTime">
-        INSERT INTO invite.refreshtime (time) VALUE (now())
+        INSERT INTO invite.refreshtime (time) VALUE (UNIX_TIMESTAMP())
     </insert>
 
     <select id="findChildrenByPhoneWithTime" resultMap="relationMap">
