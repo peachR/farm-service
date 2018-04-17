@@ -24,4 +24,7 @@ public interface InviteController {
 
     @GetMapping("redEnvelope")
     Result handleredEnvelopeCalc(InviteReq invite);
+
+    @GetMapping("refreshTime")
+    Result handleFindRefreshTime();
 }

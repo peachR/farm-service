@@ -19,5 +19,6 @@ public interface InviteService {
     Queue<InviteRelationEntity> findChildByUid(String uid);
     Pair findChildNumbersByPhone(String phone);
     List<PosterityStatistics> findRelationNumberMap(String phone,int totalConsume,int chargeConsume);
-    Map<String,Integer> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume);
+    Map<String,String> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume);
+    List<String> findRefreshTime();
 }

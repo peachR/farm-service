@@ -9,10 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
@@ -64,7 +61,16 @@ public class InviteControllerImpl implements InviteController {
         String[] phones = invite.getPhone();
         int startTime = invite.getStartTime();
         int endTime = invite.getEndTime();
-        return Result.newSuccessResult(inviteService.findRedEnvelopeCalc(phones[0],startTime,endTime,invite.getTotalConsume(),invite.getChargeConsume()));
+        List<Map<String,String>> result = new ArrayList<>();
+        for (String phone:phones) {
+            result.add(inviteService.findRedEnvelopeCalc(phone,startTime,endTime,invite.getTotalConsume(),invite.getChargeConsume()));
+        }
+        return Result.newSuccessResult(result);
+    }
+
+    @Override
+    public Result handleFindRefreshTime() {
+        return Result.newSuccessResult(inviteService.findRefreshTime());
     }
 
 }

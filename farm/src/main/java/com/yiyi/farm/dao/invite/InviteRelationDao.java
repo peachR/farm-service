@@ -21,4 +21,5 @@ public interface InviteRelationDao {
     List<InviteRelationEntity> findChildrenByPhoneWithTime(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
     Integer findTotalCharge(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
     Map<String,BigDecimal> findConsume(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
+    List<String> findRefreshTime();
 }

@@ -185,8 +185,8 @@ public class InviteServiceImpl implements InviteService {
     }
 
     @Override
-    public Map<String, Integer> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume) {
-        Map<String,Integer> result = new HashMap<>();
+    public Map<String, String> findRedEnvelopeCalc(String phone, int startTime, int endTime,int totalConsume,int chargeConsume) {
+        Map<String,String> result = new HashMap<>();
         Integer newCustomer = 0;
         Integer newValidCustomer = 0;
         Integer newTotalCharge = 0;
@@ -241,12 +241,18 @@ public class InviteServiceImpl implements InviteService {
             }
             children = tempChild;
         }
-        result.put("newCustomer",newCustomer);
-        result.put("newValidCustomer",newValidCustomer);
-        result.put("newTotalCharge",newTotalCharge);
-        result.put("newTotalConsume",newTotalConsume);
-        result.put("newTotalConsumeFromCharge",newTotalConsumeFromCharge);
+        result.put("phone",phone);
+        result.put("newCustomer",newCustomer.toString());
+        result.put("newValidCustomer",newValidCustomer.toString());
+        result.put("newTotalCharge",newTotalCharge.toString());
+        result.put("newTotalConsume",newTotalConsume.toString());
+        result.put("newTotalConsumeFromCharge",newTotalConsumeFromCharge.toString());
         return result;
+    }
+
+    @Override
+    public List<String> findRefreshTime() {
+        return relationDao.findRefreshTime();
     }
 
     private boolean checkValid(String phone,int totalConsume,int chargeConsume){
