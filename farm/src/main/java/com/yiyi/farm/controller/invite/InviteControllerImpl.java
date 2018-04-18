@@ -5,6 +5,7 @@ import com.yiyi.farm.facade.invite.InviteService;
 import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.rsp.Result;
 import com.yiyi.farm.tool.Pair;
+import com.yiyi.farm.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,14 +31,14 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleFindChildByPhone(InviteReq invite) {
-        String[] phones = invite.getPhone().trim().split(";");
+        String[] phones = StringUtil.split(invite.getPhone(),";");
         Queue<InviteRelationEntity> list = inviteService.findChildByPhone(phones[0]);
         return Result.newSuccessResult(list);
     }
 
     @Override
     public Result handleFindChildNumberByPhone(InviteReq invite) {
-        String[] phones = invite.getPhone().trim().split(";");
+        String[] phones = StringUtil.split(invite.getPhone(),";");
         Map<String, Pair> map = new ConcurrentHashMap<>();
         Stream.of(phones).parallel().forEach(phone -> map.put(phone, inviteService.findChildNumbersByPhone(phone)));
         System.out.println(map);
@@ -53,13 +54,13 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleposterityStatistics(InviteReq invite) {
-        String[] phones = invite.getPhone().trim().split(";");
+        String[] phones = StringUtil.split(invite.getPhone(),";");
         return Result.newSuccessResult(inviteService.findRelationNumberMap(phones[0],invite.getTotalConsume(),invite.getChargeConsume()));
     }
 
     @Override
     public Result handleredEnvelopeCalc(InviteReq invite) {
-        String[] phones = invite.getPhone().trim().split(";");
+        String[] phones = StringUtil.split(invite.getPhone(),";");
         int startTime = invite.getStartTime();
         int endTime = invite.getEndTime();
         List<Map<String,String>> result = new ArrayList<>();
