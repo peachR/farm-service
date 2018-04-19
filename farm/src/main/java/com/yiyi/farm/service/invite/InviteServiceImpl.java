@@ -7,6 +7,7 @@ import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.facade.invite.InviteService;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
+import com.yiyi.farm.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -176,6 +178,105 @@ public class InviteServiceImpl implements InviteService {
         return result;
     }
 
+    /**
+     * findRedEnvelopeCalc并发版本
+     * @param phone
+     * @param startTime
+     * @param endTime
+     * @param totalConsume
+     * @param chargeConsume
+     * @return
+     */
+    public Map<String, String> findRedEnvelopeCalcParallel(String phone, int startTime, int endTime, int totalConsume, int chargeConsume){
+        Map<String,String> result = new HashMap<>();
+        AtomicInteger newCustomer = new AtomicInteger(0);
+        AtomicInteger newValidCustomer = new AtomicInteger(0);
+        AtomicInteger newTotalCharge = new AtomicInteger(0);
+        AtomicInteger newTotalConsume = new AtomicInteger(0);
+        AtomicInteger newTotalConsumeFromCharge = new AtomicInteger(0);
+
+        Queue<String> phones = new ConcurrentLinkedQueue<>();
+        phones.offer(phone);
+        System.out.println(phones.size());
+
+        if(phones.size() != 0){//第一层寻找，单线程
+            List<InviteRelationEntity> tempChild = new ArrayList<>();
+            tempChild.addAll(relationDao.findChildByPhone(phones.poll()));
+            for(InviteRelationEntity entity : tempChild){//添加第一层子节点
+                if(entity.getChildPlayerPhone()!=null){
+                    phones.offer(entity.getChildPlayerPhone());
+                }
+            }
+
+            for(String s : phones){
+                //新增用户
+                statisticalResult(startTime, endTime, totalConsume, chargeConsume, newCustomer, newValidCustomer, newTotalCharge, newTotalConsume, newTotalConsumeFromCharge, s);
+            }
+        }
+        int times = 0;
+        while(phones.size() != 0){
+            List<CompletableFuture<List<String>>> relationsFutures = phones.stream()
+                    .map(p -> CompletableFuture.supplyAsync(() -> relationDao.findChildByPhone(p), executor))
+                    .map(future -> future.thenApply(relationList -> relationList.stream().map(relation -> relation.getChildPlayerPhone()).collect(Collectors.toList())))
+                    .collect(Collectors.toList());
+            Queue<String> tempPhones = new ConcurrentLinkedQueue<>();
+            relationsFutures.stream().map(CompletableFuture::join).forEach(list -> {
+                for(String str: list){
+                    if(!StringUtil.isSpace(str))
+                        tempPhones.add(str);
+                }
+            });
+            System.out.println(tempPhones.size());
+            List<CompletableFuture<Integer>> statistical = tempPhones.stream().map(p -> CompletableFuture.supplyAsync(() -> {
+                statisticalResult(startTime, endTime, totalConsume, chargeConsume, newCustomer, newValidCustomer, newTotalCharge, newTotalConsume, newTotalConsumeFromCharge, p);
+                return 0;//适配器
+            },executor)).collect(Collectors.toList());
+            statistical.stream().map(CompletableFuture::join).forEach(i -> {return;});
+            phones = tempPhones;
+            System.out.println(tempPhones);
+            times++;
+        }
+        System.out.println("times: " + times);
+
+        result.put("phone",phone);
+        result.put("newCustomer",newCustomer.toString());
+        result.put("newValidCustomer",newValidCustomer.toString());
+        result.put("newTotalCharge",newTotalCharge.toString());
+        result.put("newTotalConsume",newTotalConsume.toString());
+        result.put("newTotalConsumeFromCharge",newTotalConsumeFromCharge.toString());
+        return result;
+    }
+
+    /**
+     * 统计结果信息
+     * @param startTime
+     * @param endTime
+     * @param totalConsume
+     * @param chargeConsume
+     * @param newCustomer
+     * @param newValidCustomer
+     * @param newTotalCharge
+     * @param newTotalConsume
+     * @param newTotalConsumeFromCharge
+     * @param s
+     */
+    private void statisticalResult(int startTime, int endTime, int totalConsume, int chargeConsume, AtomicInteger newCustomer, AtomicInteger newValidCustomer, AtomicInteger newTotalCharge, AtomicInteger newTotalConsume, AtomicInteger newTotalConsumeFromCharge, String s) {
+        if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+            newCustomer.incrementAndGet();
+            //新增的有效用户
+            if(checkValid(s,totalConsume,chargeConsume)){
+                newValidCustomer.incrementAndGet();
+            }
+        }
+        //本期用户充值总额
+        newTotalCharge.addAndGet(relationDao.findTotalCharge(s,startTime,endTime));
+        //本期用户消费总额
+        Map<String,BigDecimal> consume = relationDao.findConsume(s,startTime,endTime);
+        newTotalConsume.addAndGet(consume.get("total").intValue());
+        //本期用户消费的充值金额
+        newTotalConsumeFromCharge.addAndGet(consume.get("charge").intValue());
+    }
+
     @Override
     public Map<String, String> findRedEnvelopeCalc(String phone, int startTime, int endTime, int totalConsume, int chargeConsume) {
 //        Timer timer = new Timer();
@@ -191,7 +292,6 @@ public class InviteServiceImpl implements InviteService {
         Integer newTotalCharge = 0;
         Integer newTotalConsume = 0;
         Integer newTotalConsumeFromCharge = 0;
-
 
         Queue<String> phones = new LinkedList<>();
         phones.offer(phone);

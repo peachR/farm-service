@@ -21,5 +21,6 @@ public interface InviteService {
     Pair findChildNumbersByPhone(String phone);
     List<PosterityStatistics> findRelationNumberMap(String phone,int totalConsume,int chargeConsume);
     Map<String,String> findRedEnvelopeCalc(String phone, int startTime, int endTime, int totalConsume, int chargeConsume);
+    Map<String, String> findRedEnvelopeCalcParallel(String phone, int startTime, int endTime, int totalConsume, int chargeConsume);
     List<String> findRefreshTime();
 }

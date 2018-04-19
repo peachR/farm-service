@@ -64,9 +64,11 @@ public class InviteControllerImpl implements InviteController {
         int startTime = invite.getStartTime();
         int endTime = invite.getEndTime();
         List<Map<String,String>> result = new ArrayList<>();
+        long start = System.nanoTime();
         for (String phone:phones) {
-            result.add(inviteService.findRedEnvelopeCalc(phone,startTime,endTime,invite.getTotalConsume(),invite.getChargeConsume()));
+            result.add(inviteService.findRedEnvelopeCalcParallel(phone,startTime,endTime,invite.getTotalConsume(),invite.getChargeConsume()));
         }
+        System.out.println("time is :" + ((System.nanoTime() - start)/ 1_000_000));
         return Result.newSuccessResult(result);
     }
 
