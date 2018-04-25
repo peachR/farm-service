@@ -7,7 +7,9 @@ import com.yiyi.farm.enumeration.BaseEnum;
  * @date 2018-03-30 14:16:21
  * @description
  */
-public class EnumUtil {
+public final class EnumUtil {
+    //工具类,防止实例化
+    private EnumUtil(){}
     /**
      * 根据Code获取枚举
      * @param type

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EnableCaching
+@EnableCaching//启动注解驱动缓存，需要注入一个缓存管理器bean
 public class CacheService extends CachingConfigurerSupport{
     @Autowired
     private RedisConn redisConn;
@@ -81,7 +81,7 @@ public class CacheService extends CachingConfigurerSupport{
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName(redisConn.getHost());
         factory.setPort(redisConn.getPort());
-        factory.setTimeout(redisConn.getTimeout()); // 设置连接超时时间
+        factory.setTimeout(redisConn.getTimeout());//设置连接超时时间
         factory.setDatabase(redisConn.getDatabase());
         return factory;
     }

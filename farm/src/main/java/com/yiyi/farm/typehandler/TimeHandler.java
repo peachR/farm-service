@@ -37,7 +37,7 @@ public class TimeHandler extends BaseTypeHandler<Timestamp> {
 
     private Timestamp timestampOf(long millisecond){
         try{
-            return TimeUtil.timestampOf(millisecond);
+            return TimeUtil.getTimestamp(millisecond);
         }catch (Exception ex){
             throw new IllegalArgumentException(millisecond + " can not convert to Timestamp", ex);
         }
