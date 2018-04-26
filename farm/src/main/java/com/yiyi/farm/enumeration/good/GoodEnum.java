@@ -29,11 +29,10 @@ public enum GoodEnum implements BaseEnum {
 
     @Override
     public String getCode() {
-        return null;
+        return code;
     }
 
-    @Override
     public String getMsg() {
-        return null;
+        return message;
     }
 }

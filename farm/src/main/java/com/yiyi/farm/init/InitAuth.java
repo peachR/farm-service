@@ -27,7 +27,6 @@ import java.util.Map;
  * @description 初始化权限信息
  */
 @AuthScan("com.yiyi.farm.controller")
-@Component
 public class InitAuth implements CommandLineRunner {
 
     @Autowired

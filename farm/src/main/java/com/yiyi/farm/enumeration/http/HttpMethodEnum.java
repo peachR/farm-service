@@ -29,4 +29,12 @@ public enum HttpMethodEnum {
     public void setMsg(String msg) {
         this.msg = msg;
     }
+
+    @Override
+    public String toString() {
+        return "HttpMethodEnum{" +
+                "code=" + code +
+                ", msg='" + msg + '\'' +
+                '}';
+    }
 }

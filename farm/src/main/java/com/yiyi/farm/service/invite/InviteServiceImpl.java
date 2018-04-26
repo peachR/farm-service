@@ -5,6 +5,7 @@ import com.yiyi.farm.dao.invite.InviteRelationDao;
 import com.yiyi.farm.entity.invite.InviteInfoEntity;
 import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.facade.invite.InviteService;
+import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
@@ -181,23 +182,49 @@ public class InviteServiceImpl implements InviteService {
     /**
      * findRedEnvelopeCalc并发版本
      * @param phone
-     * @param startTime
-     * @param endTime
-     * @param totalConsume
-     * @param chargeConsume
+     * @param inviteReq
      * @return
      */
-    public Map<String, String> findRedEnvelopeCalcParallel(String phone, int startTime, int endTime, int totalConsume, int chargeConsume){
-        Map<String,String> result = new HashMap<>();
-        AtomicInteger newCustomer = new AtomicInteger(0);
-        AtomicInteger newValidCustomer = new AtomicInteger(0);
-        AtomicInteger newTotalCharge = new AtomicInteger(0);
-        AtomicInteger newTotalConsume = new AtomicInteger(0);
-        AtomicInteger newTotalConsumeFromCharge = new AtomicInteger(0);
+    public Map<String, String> findRedEnvelopeCalcParallel(final String phone, InviteReq inviteReq){
+        ChildCustomer childCustomer = new ChildCustomer();//统计子节点用户信息
+        QueryCondition queryCondition = new QueryCondition(inviteReq);
 
+        Queue<String> phones = findFirstLevelChild(phone, childCustomer, queryCondition);
+        while(phones.size() != 0){
+            List<CompletableFuture<List<String>>> relationsFutures = phones.stream()
+                    .map(p -> CompletableFuture.supplyAsync(() -> relationDao.findChildByPhone(p), executor))//转换为异步任务
+                    .map(future -> future.thenApply(relationList -> relationList.stream()
+                            .map(relation -> relation.getChildPlayerPhone()).collect(Collectors.toList())))//查询完成后转换为孩子号码列表
+                    .collect(Collectors.toList());
+            Queue<String> tempPhones = new ConcurrentLinkedQueue<>();
+            //等待所有异步任务完成后添加号码
+            relationsFutures.stream().map(CompletableFuture::join).forEach(list -> {
+                for(String str: list){
+                    if(!StringUtil.isSpace(str))
+                        tempPhones.add(str);
+                }
+            });
+            List<CompletableFuture<Integer>> statistical = tempPhones.stream().map(p -> CompletableFuture.supplyAsync(() -> {
+                statisticalResult(queryCondition, childCustomer, p);
+                return 0;//适配器
+            },executor)).collect(Collectors.toList());
+            statistical.stream().map(CompletableFuture::join).forEach(i -> {return;});
+            phones = tempPhones;
+        }
+
+       return buildChildCustomerResultMap(phone, childCustomer);
+    }
+
+    /**
+     * 单线程查询第一层节点孩子
+     * @param phone
+     * @param childCustomer
+     * @param queryCondition
+     * @return
+     */
+    private Queue<String> findFirstLevelChild(String phone, ChildCustomer childCustomer, QueryCondition queryCondition) {
         Queue<String> phones = new ConcurrentLinkedQueue<>();
         phones.offer(phone);
-        System.out.println(phones.size());
 
         if(phones.size() != 0){//第一层寻找，单线程
             List<InviteRelationEntity> tempChild = new ArrayList<>();
@@ -210,75 +237,50 @@ public class InviteServiceImpl implements InviteService {
 
             for(String s : phones){
                 //新增用户
-                statisticalResult(startTime, endTime, totalConsume, chargeConsume, newCustomer, newValidCustomer, newTotalCharge, newTotalConsume, newTotalConsumeFromCharge, s);
+                statisticalResult(queryCondition, childCustomer, s);
             }
         }
-        int times = 0;
-        while(phones.size() != 0){
-            List<CompletableFuture<List<String>>> relationsFutures = phones.stream()
-                    .map(p -> CompletableFuture.supplyAsync(() -> relationDao.findChildByPhone(p), executor))
-                    .map(future -> future.thenApply(relationList -> relationList.stream().map(relation -> relation.getChildPlayerPhone()).collect(Collectors.toList())))
-                    .collect(Collectors.toList());
-            Queue<String> tempPhones = new ConcurrentLinkedQueue<>();
-            relationsFutures.stream().map(CompletableFuture::join).forEach(list -> {
-                for(String str: list){
-                    if(!StringUtil.isSpace(str))
-                        tempPhones.add(str);
-                }
-            });
-            System.out.println(tempPhones.size());
-            List<CompletableFuture<Integer>> statistical = tempPhones.stream().map(p -> CompletableFuture.supplyAsync(() -> {
-                statisticalResult(startTime, endTime, totalConsume, chargeConsume, newCustomer, newValidCustomer, newTotalCharge, newTotalConsume, newTotalConsumeFromCharge, p);
-                return 0;//适配器
-            },executor)).collect(Collectors.toList());
-            statistical.stream().map(CompletableFuture::join).forEach(i -> {return;});
-            phones = tempPhones;
-            System.out.println(tempPhones);
-            times++;
-        }
-        System.out.println("times: " + times);
+        return phones;
+    }
 
+    /**
+     * 构建子节点查询结果映射
+     * @param phone
+     * @param childCustomer
+     * @return
+     */
+    private Map<String,String> buildChildCustomerResultMap(String phone, ChildCustomer childCustomer){
+        Map<String,String> result = new HashMap<>();
         result.put("phone",phone);
-        result.put("newCustomer",newCustomer.toString());
-        result.put("newValidCustomer",newValidCustomer.toString());
-        result.put("newTotalCharge",newTotalCharge.toString());
-        result.put("newTotalConsume",newTotalConsume.toString());
-        result.put("newTotalConsumeFromCharge",newTotalConsumeFromCharge.toString());
+        result.put("newCustomer",childCustomer.getNewCustomer().toString());
+        result.put("newValidCustomer", childCustomer.getNewValidCustomer().toString());
+        result.put("newTotalCharge", childCustomer.getNewTotalCharge().toString());
+        result.put("newTotalConsume", childCustomer.getNewTotalConsume().toString());
+        result.put("newTotalConsumeFromCharge", childCustomer.getNewTotalConsumeFromCharge().toString());
         return result;
     }
 
     /**
      * 统计结果信息
-     * @param startTime
-     * @param endTime
-     * @param totalConsume
-     * @param chargeConsume
-     * @param newCustomer
-     * @param newValidCustomer
-     * @param newTotalCharge
-     * @param newTotalConsume
-     * @param newTotalConsumeFromCharge
+     * @param queryCondition 查询条件封装类
+     * @param childCustomer
      * @param s
      */
-    private void statisticalResult(int startTime, int endTime, int totalConsume, int chargeConsume, AtomicInteger newCustomer, AtomicInteger newValidCustomer, AtomicInteger newTotalCharge, AtomicInteger newTotalConsume, AtomicInteger newTotalConsumeFromCharge, String s) {
-        if(relationDao.isNewCustomer(s,startTime,endTime)>0){
-            newCustomer.incrementAndGet();
-            //新增的有效用户
-            if(checkValid(s,totalConsume,chargeConsume)){
-                newValidCustomer.incrementAndGet();
-            }
-        }
+    private void statisticalResult(QueryCondition queryCondition, ChildCustomer childCustomer, String s) {
+        queryCondition.statisticsNewCustomer(childCustomer.getNewCustomer(), childCustomer.getNewValidCustomer(), s);
         //本期用户充值总额
-        newTotalCharge.addAndGet(relationDao.findTotalCharge(s,startTime,endTime));
+        childCustomer.addAndGet(childCustomer.getNewTotalCharge(), relationDao.findTotalCharge(s,queryCondition.getStartTime(),queryCondition.getEndTime()));
         //本期用户消费总额
-        Map<String,BigDecimal> consume = relationDao.findConsume(s,startTime,endTime);
-        newTotalConsume.addAndGet(consume.get("total").intValue());
+        Map<String,BigDecimal> consume = relationDao.findConsume(s,queryCondition.getStartTime(),queryCondition.getEndTime());
+        childCustomer.addAndGet(childCustomer.getNewTotalConsume(),consume.get("total").intValue());
         //本期用户消费的充值金额
-        newTotalConsumeFromCharge.addAndGet(consume.get("charge").intValue());
+        childCustomer.addAndGet(childCustomer.getNewTotalConsumeFromCharge(),consume.get("charge").intValue());
     }
 
+
+
     @Override
-    public Map<String, String> findRedEnvelopeCalc(String phone, int startTime, int endTime, int totalConsume, int chargeConsume) {
+    public Map<String, String> findRedEnvelopeCalc(String phone, InviteReq inviteReq) {
 //        Timer timer = new Timer();
 //        timer.schedule(new TimerTask() {
 //            @Override
@@ -311,17 +313,17 @@ public class InviteServiceImpl implements InviteService {
             System.out.println(phones.size());
             for(String s : phones){
                 //新增用户
-                if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+                if(relationDao.isNewCustomer(s,inviteReq.getStartTime(),inviteReq.getEndTime())>0){
                     newCustomer++;
                     //新增的有效用户
-                    if(checkValid(s,totalConsume,chargeConsume)){
+                    if(checkValid(s,inviteReq.getTotalConsume(),inviteReq.getChargeConsume())){
                         newValidCustomer++;
                     }
                 }
                 //本期用户充值总额
-                newTotalCharge += relationDao.findTotalCharge(s,startTime,endTime);
+                newTotalCharge += relationDao.findTotalCharge(s, inviteReq.getStartTime(),inviteReq.getEndTime());
                 //本期用户消费总额
-                Map<String,BigDecimal> consume = relationDao.findConsume(s,startTime,endTime);
+                Map<String,BigDecimal> consume = relationDao.findConsume(s,inviteReq.getStartTime(),inviteReq.getEndTime());
                 newTotalConsume += consume.get("total").intValue();
                 //本期用户消费的充值金额
                 newTotalConsumeFromCharge += consume.get("charge").intValue();
@@ -462,6 +464,102 @@ public class InviteServiceImpl implements InviteService {
         result.add(node);
     }
 
+    /**
+     * 查询条件
+     */
+    private class QueryCondition{
+        int startTime;
+        int endTime;
+        int totalConsume;
+        int chargeConsume;
 
+        public QueryCondition(int startTime, int endTime, int totalConsume, int chargeConsume) {
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.totalConsume = totalConsume;
+            this.chargeConsume = chargeConsume;
+        }
 
+        public QueryCondition(InviteReq inviteReq){
+            this.startTime = inviteReq.getStartTime();
+            this.endTime = inviteReq.getEndTime();
+            this.totalConsume = inviteReq.getTotalConsume();
+            this.chargeConsume = inviteReq.getChargeConsume();
+        }
+
+        public int getStartTime() {
+            return startTime;
+        }
+
+        public int getEndTime() {
+            return endTime;
+        }
+
+        public int getTotalConsume() {
+            return totalConsume;
+        }
+
+        public int getChargeConsume() {
+            return chargeConsume;
+        }
+
+        /**
+         * 统计新用户
+         * @param newCustomer
+         * @param newValidCustomer
+         * @param s
+         */
+        public void statisticsNewCustomer(AtomicInteger newCustomer, AtomicInteger newValidCustomer, String s) {
+            if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+                newCustomer.incrementAndGet();
+                //新增的有效用户
+                if(checkValid(s,totalConsume,chargeConsume)){
+                    newValidCustomer.incrementAndGet();
+                }
+            }
+        }
+    }
+
+    /**
+     * 某节点下的孩子用户
+     */
+    private class ChildCustomer{
+        AtomicInteger newCustomer;//新增用户
+        AtomicInteger newValidCustomer;//新增有效用户
+        AtomicInteger newTotalCharge;//总充值金额，所有孩子并非新增用户的
+        AtomicInteger newTotalConsume;//总消费金额
+        AtomicInteger newTotalConsumeFromCharge;//总消费金额中的充值部分
+
+        ChildCustomer(){
+            newCustomer = new AtomicInteger(0);
+            newValidCustomer = new AtomicInteger(0);
+            newTotalCharge = new AtomicInteger(0);
+            newTotalConsume = new AtomicInteger(0);
+            newTotalConsumeFromCharge = new AtomicInteger(0);
+        }
+
+        public AtomicInteger getNewCustomer() {
+            return newCustomer;
+        }
+
+        public AtomicInteger getNewValidCustomer() {
+            return newValidCustomer;
+        }
+
+        public AtomicInteger getNewTotalCharge() {
+            return newTotalCharge;
+        }
+
+        public AtomicInteger getNewTotalConsume() {
+            return newTotalConsume;
+        }
+
+        public AtomicInteger getNewTotalConsumeFromCharge() {
+            return newTotalConsumeFromCharge;
+        }
+
+        public int addAndGet(AtomicInteger who, int value){
+            return who.addAndGet(value);
+        }
+    }
 }
