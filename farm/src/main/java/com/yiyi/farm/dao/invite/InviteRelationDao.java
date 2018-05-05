@@ -11,16 +11,16 @@ import java.util.Map;
 
 @Mapper
 public interface InviteRelationDao {
-    public void insertRelation(@Param("relationList")List<InviteRelationEntity> relation);
-    public List<InviteRelationEntity> findChildByPhone(@Param("phone") String phone);
-    public List<InviteRelationEntity> findChildByUid(@Param("uid") String uid);
+    void insertRelation(@Param("relationList")List<InviteRelationEntity> relation);
+    List<InviteRelationEntity> findAllRelation();
+    List<InviteRelationEntity> findChildByPhone(@Param("phone") String phone);
+    List<InviteRelationEntity> findChildByUid(@Param("uid") String uid);
     List<InviteRelationEntity> findChildrenByPhone(@Param("phone") String phone);
     Map<String,BigDecimal> checkValidCustomer(@Param("phone") String phone);
     void clearRelation();
     Integer recordRefreshTime();
     List<InviteRelationEntity> findChildrenByPhoneWithTime(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
     Integer findTotalCharge(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
-    Map<String,BigDecimal> findConsume(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);
     List<String> findRefreshTime();
     Integer isNewCustomer(@Param("phone") String phone, @Param("startTime")int startTime,@Param("endTime") int endTime);    //判断是否该时间段内新增的用户
 }

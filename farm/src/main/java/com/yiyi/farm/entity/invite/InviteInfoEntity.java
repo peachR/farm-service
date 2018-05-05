@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-public class InviteInfoEntity implements Serializable {
+public class InviteInfoEntity implements Serializable, Customerable {
     private Integer id;
 
     private String uid;

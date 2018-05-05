@@ -3,14 +3,18 @@ package com.yiyi.farm.service.redis;
 import com.yiyi.farm.facade.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collector;
 
 @Service
 public class RedisServiceImpl implements RedisService {
@@ -91,8 +95,52 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public <K,HK,HV> boolean hmset(K key, Map<HK, HV> map){
+        return hmset(key, map, null);
+    }
+
+    @Override
     public <K, HK, HV> Map<HK, HV> hgetAll(K key) {
         HashOperations<K, HK, HV> operations = redisTemplate.opsForHash();
         return operations.entries(key);
+    }
+
+    @Override
+    public <K, LV> boolean leftPushAll(K key, Long expireTime, LV ...values) {
+        ListOperations<K, LV> operations = redisTemplate.opsForList();
+        operations.leftPushAll(key,values);
+        if(expireTime != null){
+            redisTemplate.expire(key, expireTime, TimeUnit.SECONDS);
+        }
+        return true;
+    }
+
+    @Override
+    public <K, LV> boolean leftPushAll(K key, Collection<LV> values, Long expireTime) {
+        ListOperations<K, LV> operations = redisTemplate.opsForList();
+
+        operations.leftPushAll(key, values);
+
+        if(expireTime != null){
+            redisTemplate.expire(key, expireTime, TimeUnit.SECONDS);
+        }
+        return true;
+    }
+
+    @Override
+    public <K, LV> boolean leftPushAll(K key, Collection<LV> values){
+        return leftPushAll(key, values, null);
+    }
+
+    @Override
+    public <K, LV> List<LV> lRange(K key, long fromIndex, long toIndex){
+        ListOperations<K, LV> operations = redisTemplate.opsForList();
+
+        return operations.range(key, fromIndex, toIndex);
+    }
+
+    @Override
+    public <K, LV> List<LV> lGetAll(K key){
+        return lRange(key, 0, -1);
     }
 }

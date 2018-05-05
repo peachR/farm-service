@@ -1,6 +1,8 @@
 package com.yiyi.farm.facade.redis;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,8 +60,37 @@ public interface RedisService {
      */
     boolean set(final String key, Serializable value, long expireTime);
 
-
+    /**
+     * 添加一个hash表
+     * @param key
+     * @param map
+     * @param expireTime
+     * @param <K>
+     * @param <HK>
+     * @param <HV>
+     * @return
+     */
     <K,HK,HV> boolean hmset(K key, Map<HK, HV> map, Long expireTime);
 
+    <K,HK,HV> boolean hmset(K key, Map<HK, HV> map);
+
+    /**
+     * 获取一个缓存的hash表
+     * @param key
+     * @param <K>
+     * @param <HK>
+     * @param <HV>
+     * @return
+     */
     <K,HK,HV> Map<HK,HV> hgetAll(final K key);
+
+    <K, LV> boolean leftPushAll(K key, Long expireTime, LV ...values);
+
+    <K, LV> boolean leftPushAll(K key, Collection<LV> values, Long expireTime);
+
+    <K, LV> boolean leftPushAll(K key, Collection<LV> values);
+
+    <K, LV> List<LV> lRange(K key, long fromIndex, long toIndex);
+
+    <K, LV> List<LV> lGetAll(K key);
 }

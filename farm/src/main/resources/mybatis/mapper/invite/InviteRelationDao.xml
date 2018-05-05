@@ -31,6 +31,12 @@
         </if>
     </insert>
 
+    <select id="findAllRelation" resultMap="relationMap">
+        SELECT
+        <include refid="relationTreeModel"/>
+        FROM invite.relationTree
+    </select>
+
     <select id="findChildByPhone" resultMap="relationMap">
         SELECT
         <include refid="relationTreeModel"/>
@@ -76,10 +82,6 @@
 
     <select id="findTotalCharge" resultType="int">
       SELECT COALESCE(SUM(r.recharge),0) from farm_log.log_recharge as r where phone=#{phone} and time between #{startTime} and #{endTime};
-    </select>
-    
-    <select id="findConsume" resultType="map">
-        SELECT COALESCE(SUM(c.money),0) as total,COALESCE(SUM(c.yuer),0) as charge from farm_log.log_consume as c where phone=#{phone} and time between #{startTime} and #{endTime};
     </select>
 
     <select id="findRefreshTime" resultType="java.lang.String">

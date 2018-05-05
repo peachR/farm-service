@@ -1,5 +1,7 @@
 package com.yiyi.farm.service.invite;
 
+import com.yiyi.farm.controller.invite.InviteController;
+import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
 import com.yiyi.farm.entity.invite.InviteInfoEntity;
@@ -9,6 +11,7 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +32,29 @@ public class InviteServiceImpl implements InviteService {
     @Autowired
     private InviteRelationDao relationDao;
 
+    @Autowired
+    private InviteCache inviteCache;
+
+    @Autowired
+    private ConsumeLogDao consumeLogDao;
+
     private List<InviteInfoEntity> nowNodes;
+
 
     /**
      * 线程池，用于多线程查询子孙节点
      */
-    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new LinkedBlockingQueue<>());
+    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new ArrayBlockingQueue<>(2000));
+
+    @Override
+    public boolean initCaching(){
+        inviteCache.clearCache();
+        inviteCache.cacheInviteInfo();
+        inviteCache.cacheLogConsume();
+        inviteCache.cahceInviteRelation();
+        return true;
+    }
+
 
     /**
      * 初始化关系树
@@ -45,10 +65,17 @@ public class InviteServiceImpl implements InviteService {
         recordTime();
     }
 
+
+    /**
+     * 记录重建时间
+     */
     private void recordTime() {
         relationDao.recordRefreshTime();
     }
 
+    /**
+     * 清空关系表
+     */
     private void clearRelation() {
         relationDao.clearRelation();
     }
@@ -112,7 +139,7 @@ public class InviteServiceImpl implements InviteService {
             while(!phones.isEmpty()){//多线程迭代查询
                 final String phone = phones.poll();
                 executor.execute(()->{
-                    List<InviteRelationEntity> now = relationDao.findChildByPhone(phone);
+                    List<InviteRelationEntity> now = inviteCache.findChildByPhone(phone);
                     if(now.size() != 0){
                         result.addAll(now);
                         for(InviteRelationEntity entity : now){
@@ -189,8 +216,14 @@ public class InviteServiceImpl implements InviteService {
         ChildCustomer childCustomer = new ChildCustomer();//统计子节点用户信息
         QueryCondition queryCondition = new QueryCondition(inviteReq);
 
+        long start, times = 1l;
+
+        start = System.nanoTime();
         Queue<String> phones = findFirstLevelChild(phone, childCustomer, queryCondition);
+        System.out.println("findFirstLevelChild: " + (System.nanoTime() - start) / 1_000_000);
         while(phones.size() != 0){
+            start = System.nanoTime();
+
             List<CompletableFuture<List<String>>> relationsFutures = phones.stream()
                     .map(p -> CompletableFuture.supplyAsync(() -> relationDao.findChildByPhone(p), executor))//转换为异步任务
                     .map(future -> future.thenApply(relationList -> relationList.stream()
@@ -204,15 +237,26 @@ public class InviteServiceImpl implements InviteService {
                         tempPhones.add(str);
                 }
             });
-            List<CompletableFuture<Integer>> statistical = tempPhones.stream().map(p -> CompletableFuture.supplyAsync(() -> {
-                statisticalResult(queryCondition, childCustomer, p);
-                return 0;//适配器
-            },executor)).collect(Collectors.toList());
-            statistical.stream().map(CompletableFuture::join).forEach(i -> {return;});
+
+            System.out.println("getChildPhone " + times + ": " + (System.nanoTime() - start) / 1_000_000);
+
+            start = System.nanoTime();
+
+            parallelStatisticalResult(childCustomer, queryCondition, tempPhones);
+            System.out.println("statistical " + times++ + ": " + (System.nanoTime() - start) / 1_000_000);
+
             phones = tempPhones;
         }
 
        return buildChildCustomerResultMap(phone, childCustomer);
+    }
+
+    private void parallelStatisticalResult(ChildCustomer childCustomer, QueryCondition queryCondition, Queue<String> phones) {
+        List<CompletableFuture<Integer>> statistical = phones.stream().map(phone -> CompletableFuture.supplyAsync(() -> {
+            statisticalResult(queryCondition, childCustomer, phone);
+            return 0;//适配器
+        },executor)).collect(Collectors.toList());
+        statistical.stream().map(CompletableFuture::join).forEach(i -> {return;});
     }
 
     /**
@@ -228,17 +272,14 @@ public class InviteServiceImpl implements InviteService {
 
         if(phones.size() != 0){//第一层寻找，单线程
             List<InviteRelationEntity> tempChild = new ArrayList<>();
-            tempChild.addAll(relationDao.findChildByPhone(phones.poll()));
+            tempChild.addAll(inviteCache.findChildByPhone(phones.poll()));
             for(InviteRelationEntity entity : tempChild){//添加第一层子节点
                 if(entity.getChildPlayerPhone()!=null){
                     phones.offer(entity.getChildPlayerPhone());
                 }
             }
 
-            for(String s : phones){
-                //新增用户
-                statisticalResult(queryCondition, childCustomer, s);
-            }
+            parallelStatisticalResult(childCustomer, queryCondition, phones);
         }
         return phones;
     }
@@ -264,17 +305,28 @@ public class InviteServiceImpl implements InviteService {
      * 统计结果信息
      * @param queryCondition 查询条件封装类
      * @param childCustomer
-     * @param s
+     * @param phone
      */
-    private void statisticalResult(QueryCondition queryCondition, ChildCustomer childCustomer, String s) {
-        queryCondition.statisticsNewCustomer(childCustomer.getNewCustomer(), childCustomer.getNewValidCustomer(), s);
+    private void statisticalResult(QueryCondition queryCondition, ChildCustomer childCustomer, String phone) {
+        long start;
+
+        start = System.nanoTime();
+
+        queryCondition.statisticsNewCustomer(childCustomer.getNewCustomer(), childCustomer.getNewValidCustomer(), phone);
+
+        System.out.println("inner getNewValidCustomer: " + (System.nanoTime() - start) / 1_000_000);
         //本期用户充值总额
-        childCustomer.addAndGet(childCustomer.getNewTotalCharge(), relationDao.findTotalCharge(s,queryCondition.getStartTime(),queryCondition.getEndTime()));
+        start = System.nanoTime();
+        childCustomer.addAndGet(childCustomer.getNewTotalCharge(), relationDao.findTotalCharge(phone,queryCondition.getStartTime(),queryCondition.getEndTime()));
+        System.out.println("inner findTotalCharge: " + (System.nanoTime() - start) / 1_000_000);
         //本期用户消费总额
-        Map<String,BigDecimal> consume = relationDao.findConsume(s,queryCondition.getStartTime(),queryCondition.getEndTime());
-        childCustomer.addAndGet(childCustomer.getNewTotalConsume(),consume.get("total").intValue());
+        start = System.nanoTime();
+        Map<String,Integer> consume = inviteCache.findConsume(phone,queryCondition.getStartTime(),queryCondition.getEndTime());
+        childCustomer.addAndGet(childCustomer.getNewTotalConsume(),consume.get("total"));
+        System.out.println("inner findConsume: " + (System.nanoTime() - start) / 1_000_000);
+
         //本期用户消费的充值金额
-        childCustomer.addAndGet(childCustomer.getNewTotalConsumeFromCharge(),consume.get("charge").intValue());
+        childCustomer.addAndGet(childCustomer.getNewTotalConsumeFromCharge(),consume.get("charge"));
     }
 
 
@@ -301,7 +353,7 @@ public class InviteServiceImpl implements InviteService {
         while (phones.size()!=0){
             List<InviteRelationEntity> tempChild = new ArrayList<>();
             while (phones.size()!=0){
-                tempChild.addAll(relationDao.findChildByPhone(phones.poll()));
+                tempChild.addAll(inviteCache.findChildByPhone(phones.poll()));
             }
 
             phones.clear();
@@ -323,7 +375,7 @@ public class InviteServiceImpl implements InviteService {
                 //本期用户充值总额
                 newTotalCharge += relationDao.findTotalCharge(s, inviteReq.getStartTime(),inviteReq.getEndTime());
                 //本期用户消费总额
-                Map<String,BigDecimal> consume = relationDao.findConsume(s,inviteReq.getStartTime(),inviteReq.getEndTime());
+                Map<String,BigDecimal> consume = consumeLogDao.findConsume(s,inviteReq.getStartTime(),inviteReq.getEndTime());
                 newTotalConsume += consume.get("total").intValue();
                 //本期用户消费的充值金额
                 newTotalConsumeFromCharge += consume.get("charge").intValue();
@@ -357,7 +409,7 @@ public class InviteServiceImpl implements InviteService {
      * @return 直接孩子个数
      */
     private int findDirectSuccessor(Queue<InviteRelationEntity> result, Queue<String> phones) {
-        List<InviteRelationEntity> first = relationDao.findChildByPhone(phones.poll());
+        List<InviteRelationEntity> first = inviteCache.findChildByPhone(phones.poll());
         if(first.size() != 0){
             result.addAll(first);
             for(InviteRelationEntity entity : first){
@@ -402,8 +454,6 @@ public class InviteServiceImpl implements InviteService {
 
         while (nowNodes.size() != 0) {
             List<InviteRelationEntity> list = buildRelation(nowNodes);
-            System.out.println(list.size() + " next: "+ nowNodes.size());
-            System.out.println();
             relationDao.insertRelation(list);
         }
     }
@@ -468,10 +518,10 @@ public class InviteServiceImpl implements InviteService {
      * 查询条件
      */
     private class QueryCondition{
-        int startTime;
-        int endTime;
-        int totalConsume;
-        int chargeConsume;
+        final int startTime;
+        final int endTime;
+        final int totalConsume;
+        final int chargeConsume;
 
         public QueryCondition(int startTime, int endTime, int totalConsume, int chargeConsume) {
             this.startTime = startTime;
@@ -507,13 +557,14 @@ public class InviteServiceImpl implements InviteService {
          * 统计新用户
          * @param newCustomer
          * @param newValidCustomer
-         * @param s
+         * @param phone
          */
-        public void statisticsNewCustomer(AtomicInteger newCustomer, AtomicInteger newValidCustomer, String s) {
-            if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+        public void statisticsNewCustomer(AtomicInteger newCustomer, AtomicInteger newValidCustomer, String phone) {
+//            if(relationDao.isNewCustomer(s,startTime,endTime)>0){
+            if(inviteCache.isNewCustomer(phone, startTime, endTime)){
                 newCustomer.incrementAndGet();
                 //新增的有效用户
-                if(checkValid(s,totalConsume,chargeConsume)){
+                if(checkValid(phone,totalConsume,chargeConsume)){
                     newValidCustomer.incrementAndGet();
                 }
             }
@@ -558,6 +609,12 @@ public class InviteServiceImpl implements InviteService {
             return newTotalConsumeFromCharge;
         }
 
+        /**
+         * CAS增加并获取结果
+         * @param who 待增加的字段
+         * @param value 增加值
+         * @return 增加后的结果
+         */
         public int addAndGet(AtomicInteger who, int value){
             return who.addAndGet(value);
         }

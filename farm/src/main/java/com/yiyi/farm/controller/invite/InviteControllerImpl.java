@@ -7,6 +7,7 @@ import com.yiyi.farm.rsp.Result;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.websocket.Session;
@@ -59,6 +60,7 @@ public class InviteControllerImpl implements InviteController {
     }
 
     @Override
+    @Cacheable(cacheNames = "envelopCalc")
     public Result handleredEnvelopeCalc(InviteReq invite) {
         String[] phones = StringUtil.split(invite.getPhone(),";");
         List<Map<String,String>> result = new ArrayList<>();
@@ -67,12 +69,19 @@ public class InviteControllerImpl implements InviteController {
             result.add(inviteService.findRedEnvelopeCalcParallel(phone,invite));
         }
         System.out.println("time is :" + ((System.nanoTime() - start)/ 1_000_000));
+        System.out.println("no cache");
         return Result.newSuccessResult(result);
     }
 
     @Override
     public Result handleFindRefreshTime() {
         return Result.newSuccessResult(inviteService.findRefreshTime());
+    }
+
+    @Override
+    public Result handleAddCache() {
+        singlePool.execute(() -> inviteService.initCaching());
+        return Result.newSuccessResult();
     }
 
 }

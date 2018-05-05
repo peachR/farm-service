@@ -3,7 +3,7 @@ package com.yiyi.farm.entity.invite;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class InviteRelationEntity implements Serializable {
+public class InviteRelationEntity implements Serializable, Customerable {
     private Integer id;
 
     private String uid;

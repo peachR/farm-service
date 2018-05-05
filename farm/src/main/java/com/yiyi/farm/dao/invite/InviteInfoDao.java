@@ -12,4 +12,6 @@ public interface InviteInfoDao {
     public ArrayList<InviteInfoEntity> findRoots();
 
     public List<InviteInfoEntity> findChilds(@Param("uid")String uid);
+
+    public List<InviteInfoEntity> findAll();
 }

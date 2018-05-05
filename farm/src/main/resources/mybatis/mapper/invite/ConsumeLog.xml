@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yiyi.farm.dao.invite.ConsumeLogDao">
+    <resultMap id="consumeMap" type="com.yiyi.farm.entity.invite.LogConsumeEntity">
+        <id property="id" column="id"/>
+        <result property="uid" column="uid"/>
+        <result property="phone" column="phone"/>
+        <result property="type" column="type"/>
+        <result property="info" column="info"/>
+        <result property="money" column="money"/>
+        <result property="hongbao" column="hongbao"/>
+        <result property="yuer" column="yuer"/>
+        <result property="time" column="time" typeHandler="com.yiyi.farm.typehandler.TimeHandler"/>
+    </resultMap>
+
+    <sql id="allParam">
+        farm_log.log_consume.id, farm_log.log_consume.uid, farm_log.log_consume.phone,
+        farm_log.log_consume.type,farm_log.log_consume.info,farm_log.log_consume.money,
+        farm_log.log_consume.hongbao,farm_log.log_consume.yuer,farm_log.log_consume.time
+    </sql>
+
+    <select id="findAll" resultMap="consumeMap">
+        SELECT
+        <include refid="allParam"/>
+        FROM farm_log.log_consume
+    </select>
+
+    <select id="findConsume" resultType="map">
+        SELECT COALESCE(SUM(c.money),0) as total,COALESCE(SUM(c.yuer),0) as charge from farm_log.log_consume as c where phone=#{phone} and time between #{startTime} and #{endTime};
+    </select>
+
+</mapper>

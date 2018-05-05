@@ -3,6 +3,7 @@ package com.yiyi.farm.req.invite;
 import com.yiyi.farm.req.AbstractReq;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 
 public class InviteReq extends AbstractReq {
     private String phone;
@@ -58,5 +59,17 @@ public class InviteReq extends AbstractReq {
 
     public void setEndTime(int endTime) {
         this.endTime = endTime;
+    }
+
+    @Override
+    public String toString() {
+        return "InviteReq{" +
+                "phone='" + phone + '\'' +
+                ", uid=" + Arrays.toString(uid) +
+                ", totalConsume=" + totalConsume +
+                ", chargeConsume=" + chargeConsume +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                '}';
     }
 }

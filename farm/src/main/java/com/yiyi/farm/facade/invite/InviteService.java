@@ -14,6 +14,8 @@ import java.util.Queue;
 import java.util.concurrent.Executor;
 
 public interface InviteService {
+    boolean initCaching();
+
     void init();
     Queue<InviteRelationEntity> findChildByPhone(String phone, int[]first);
     Queue<InviteRelationEntity> findChildByUid(String uid, int[] first);

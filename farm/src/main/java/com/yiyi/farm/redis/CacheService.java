@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,8 +64,9 @@ public class CacheService extends CachingConfigurerSupport{
     @Bean
     public CacheManager CacheManager(RedisTemplate redisTemplate) {
         RedisCacheManager rcm = new RedisCacheManager(redisTemplate);
+        rcm.setCacheNames(Arrays.asList("envelopCalc"));
         // 设置cache过期时间,时间单位是秒
-        rcm.setDefaultExpiration(60);
+        rcm.setDefaultExpiration(1800);
         Map<String, Long> map = new HashMap<String, Long>();
         map.put("test", 60L);
         rcm.setExpires(map);

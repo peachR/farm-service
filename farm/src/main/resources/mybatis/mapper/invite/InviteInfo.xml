@@ -21,4 +21,7 @@
         SELECT phone,uid,player_id,server_id,up_player_uid,up_player_phone,time FROM farm_center.invite_info WHERE up_player_uid = #{uid}
     </select>
 
+    <select id="findAll" resultMap="inviteInfoMap">
+        SELECT phone,uid,player_id,server_id,up_player_uid,up_player_phone,time FROM farm_center.invite_info
+    </select>
 </mapper>
