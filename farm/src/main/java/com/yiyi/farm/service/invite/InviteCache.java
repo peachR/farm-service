@@ -15,7 +15,6 @@ import com.yiyi.farm.util.generator.InfoGenerator;
 import com.yiyi.farm.util.generator.KeyGenerator;
 import com.yiyi.farm.util.generator.RelationGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;

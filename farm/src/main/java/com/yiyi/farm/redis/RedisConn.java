@@ -15,6 +15,7 @@ public class RedisConn {
     private int port;
     private int timeout;
     private int database;
+    private int expireTime;
 
 
     public String getHost() {
@@ -49,6 +50,14 @@ public class RedisConn {
         this.database = database;
     }
 
+    public int getExpireTime() {
+        return expireTime;
+    }
+
+    public void setExpireTime(int expireTime) {
+        this.expireTime = expireTime;
+    }
+
     @Override
     public String toString() {
         return "RedisConn{" +
@@ -56,6 +65,7 @@ public class RedisConn {
                 ", port=" + port +
                 ", timeout=" + timeout +
                 ", database=" + database +
+                ", expireTime=" + expireTime +
                 '}';
     }
 }

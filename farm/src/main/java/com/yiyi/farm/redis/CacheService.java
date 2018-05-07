@@ -66,7 +66,7 @@ public class CacheService extends CachingConfigurerSupport{
         RedisCacheManager rcm = new RedisCacheManager(redisTemplate);
         rcm.setCacheNames(Arrays.asList("envelopCalc"));
         // 设置cache过期时间,时间单位是秒
-        rcm.setDefaultExpiration(1800);
+        rcm.setDefaultExpiration(redisConn.getExpireTime());
         Map<String, Long> map = new HashMap<String, Long>();
         map.put("test", 60L);
         rcm.setExpires(map);
