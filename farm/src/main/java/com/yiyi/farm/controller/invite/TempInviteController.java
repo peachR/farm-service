@@ -31,7 +31,7 @@ public class TempInviteController {
     @GetMapping("statistics")
     public Result<List<Map<String,Object>>> getStatistics(InviteReq inviteReq){
 
-        String[] phones = StringUtil.split(inviteReq.getPhone(),",");
+        String[] phones = StringUtil.split(inviteReq.getPhone(),";");
         List<Map<String,Object>> result = new ArrayList<>();
         for (String phone:phones) {
             Map<String,Object> map = new HashMap<>();
@@ -39,7 +39,6 @@ public class TempInviteController {
             map.put("level",inviteService.findStatistics(phone,inviteReq));
             result.add(map);
         }
-
         return Result.newSuccessResult(result);
     }
 }
