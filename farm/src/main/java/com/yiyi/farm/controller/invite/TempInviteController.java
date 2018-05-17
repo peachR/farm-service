@@ -29,14 +29,14 @@ public class TempInviteController {
     }
 
     @GetMapping("statistics")
-    public Result<List<Map<String,Map<String,TempInviteServiceImpl.ChildStatistics>>>> getStatistics(InviteReq inviteReq){
+    public Result<List<Map<String,Object>>> getStatistics(InviteReq inviteReq){
 
         String[] phones = StringUtil.split(inviteReq.getPhone(),",");
-        List<Map<String,Map<String,TempInviteServiceImpl.ChildStatistics>>> result = new ArrayList<>();
-        long start = System.nanoTime();
+        List<Map<String,Object>> result = new ArrayList<>();
         for (String phone:phones) {
-            Map<String,Map<String,TempInviteServiceImpl.ChildStatistics>> map = new HashMap<>();
-            map.put(phone,inviteService.findStatistics(phone,inviteReq));
+            Map<String,Object> map = new HashMap<>();
+            map.put("phone",phone);
+            map.put("level",inviteService.findStatistics(phone,inviteReq));
             result.add(map);
         }
 
