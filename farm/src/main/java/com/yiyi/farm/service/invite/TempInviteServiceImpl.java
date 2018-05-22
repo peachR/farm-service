@@ -16,10 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -41,11 +38,12 @@ public class TempInviteServiceImpl {
     public static ExecutorService executor = Executors.newCachedThreadPool();
 
 
-    public boolean initCache(){
+    public boolean initCache() throws ExecutionException, InterruptedException {
         flushDB();
-        executor.submit(()->initConsumeLog());
-        executor.submit(()->initInviteInfo());
-        executor.submit(()->initInviteRelation());
+        initConsumeLog();
+        initInviteInfo();
+        initInviteRelation();
+        redisTemplate.opsForValue().set("cacheOrNot","yes");
         return true;
     }
 

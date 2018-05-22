@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by Administrator on 2018-5-15.
@@ -24,7 +25,7 @@ public class TempInviteController {
     private TempInviteServiceImpl inviteService;
 
     @PostMapping("initCache")
-    public void initCache(){
+    public void initCache() throws ExecutionException, InterruptedException {
         inviteService.initCache();
     }
 
