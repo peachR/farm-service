@@ -49,7 +49,16 @@ public class TempInviteController {
 
     @GetMapping("rank")
     public Result<List<Map<String,String>>> getRankByMonth(InviteReq inviteReq){
-        return Result.newSuccessResult(inviteService.getRank(inviteReq).subList(0,30));
+        return Result.newSuccessResult(inviteService.getRank(inviteReq).subList(0,inviteReq.getRankNumber()));
     }
 
+    @GetMapping("rankOnlyPhone")
+    public Result<List<String>> getRankByMonthOnlyPhone(InviteReq inviteReq){
+        List<Map<String,String>> result = inviteService.getRank(inviteReq).subList(0,inviteReq.getRankNumber());
+        List<String> phones = new ArrayList<>();
+        for(Map<String,String> map : result){
+            phones.add(map.get("phone"));
+        }
+        return Result.newSuccessResult(phones);
+    }
 }

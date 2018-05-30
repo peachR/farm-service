@@ -12,6 +12,7 @@ public class InviteReq extends AbstractReq {
     private int chargeConsume;
     private int startTime;
     private int endTime;
+    private int rankNumber;
 
     public String getPhone() {
         return phone;
@@ -59,6 +60,14 @@ public class InviteReq extends AbstractReq {
 
     public void setEndTime(int endTime) {
         this.endTime = endTime;
+    }
+
+    public int getRankNumber() {
+        return rankNumber;
+    }
+
+    public void setRankNumber(int rankNumber) {
+        this.rankNumber = rankNumber;
     }
 
     @Override
