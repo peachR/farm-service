@@ -37,7 +37,72 @@ public class TempInviteServiceImpl {
 
     public static ExecutorService executor = Executors.newCachedThreadPool();
 
+    /**
+     * 获取邀请数Rank
+     * @return
+     */
+    public List<Map<String,String>> getRank(InviteReq inviteReq){
+        //获得所有phone
+        Map<String, List<InviteRelationEntity>> map = inviteRelationDao.findAllRelation().stream().collect(Collectors.groupingBy(InviteRelationEntity::getPhone));
+        List<String> phones = new ArrayList<>(map.keySet());
+        System.out.println("phones get");
+        //结果集
+        Map<String,Integer> ranks = new TreeMap<>();
 
+        for(String phone : phones){
+            //获得这个phone的统计信息
+            Map<String, ChildStatistics> childStatistics = findStatistics(phone,inviteReq);
+            //移除第0层
+            Set<String> levels = childStatistics.keySet();
+            levels.remove("0");
+            //新增用户总数量
+            int childs = 0;
+            for (String level : levels){
+                childs += childStatistics.get(level).getNewCustomer().intValue();
+            }
+            ranks.put(phone,childs);
+        }
+        System.out.println("info get");
+        List<Map.Entry<String, Integer>> entryArrayList = new ArrayList<>(ranks.entrySet());
+        Collections.sort(entryArrayList, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+                return  - o1.getValue() + o2.getValue();
+            }
+        });
+        System.out.println("sort get");
+        List<Map<String,String>> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : entryArrayList) {
+            Map<String,String> phoneAndChilds = new HashMap<>();
+            phoneAndChilds.put("phone",entry.getKey());
+            phoneAndChilds.put("childs",String.valueOf(entry.getValue()));
+            result.add(phoneAndChilds);
+        }
+        System.out.println("return get");
+        return result;
+    }
+    public List<String> test(){
+        Map<String, List<InviteRelationEntity>> map = inviteRelationDao.findAllRelation().stream().collect(Collectors.groupingBy(InviteRelationEntity::getPhone));
+        List<String> phones = new ArrayList<>(map.keySet());
+        long start = System.currentTimeMillis();
+        InviteReq inviteReq = new InviteReq();
+        inviteReq.setTotalConsume(0);
+        inviteReq.setStartTime(1293814860);
+        inviteReq.setEndTime(1526981099);
+        phones.stream().forEach(p->findStatistics(p,inviteReq));
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println(System.currentTimeMillis() - start);
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        System.out.println("-------------------");
+        return phones;
+    }
     public boolean initCache() throws ExecutionException, InterruptedException {
         flushDB();
         initConsumeLog();
@@ -146,7 +211,7 @@ public class TempInviteServiceImpl {
             int consumeValue = consumes.stream()
                     .map(LogConsumeEntity::getMoney)
                     .reduce(0,Integer::sum);
-            if(consumeValue > inviteReq.getTotalConsume()){
+            if(consumeValue >= inviteReq.getTotalConsume()){
                 return true;
             }else {
                 return false;
@@ -183,7 +248,12 @@ public class TempInviteServiceImpl {
         }
         //新增消费金额
         statistics.getNewTotalConsume().addAndGet(getNewConsumeValue(phone,inviteReq));
+        //总用户数
         statistics.getTotalCustomer().incrementAndGet();
+        //新增用户数
+        if(isNewCustomer(phone,inviteReq)){
+            statistics.getNewCustomer().incrementAndGet();
+        }
     }
 
     public Map<String, ChildStatistics> findStatistics(String phone, InviteReq inviteReq){
@@ -238,11 +308,13 @@ public class TempInviteServiceImpl {
         AtomicInteger newValidCustomer;//新增有效用户
         AtomicInteger newTotalConsume;//总消费金额
         AtomicInteger totalCustomer;//该层总用户数
+        AtomicInteger newCustomer; //新增用户数
 
         ChildStatistics() {
             this.newValidCustomer = new AtomicInteger(0);
             this.newTotalConsume = new AtomicInteger(0);
             this.totalCustomer = new AtomicInteger(0);
+            this.newCustomer = new AtomicInteger(0);
         }
 
         public AtomicInteger getNewValidCustomer() {
@@ -255,6 +327,10 @@ public class TempInviteServiceImpl {
 
         public AtomicInteger getTotalCustomer() {
             return totalCustomer;
+        }
+
+        public AtomicInteger getNewCustomer() {
+            return newCustomer;
         }
     }
 }

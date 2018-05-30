@@ -42,4 +42,14 @@ public class TempInviteController {
         }
         return Result.newSuccessResult(result);
     }
+    @GetMapping("test")
+    public Integer test(){
+        return inviteService.test().size();
+    }
+
+    @GetMapping("rank")
+    public Result<List<Map<String,String>>> getRankByMonth(InviteReq inviteReq){
+        return Result.newSuccessResult(inviteService.getRank(inviteReq).subList(0,30));
+    }
+
 }
