@@ -18,14 +18,15 @@ import java.util.stream.Stream;
 
 @RestController
 public class InviteControllerImpl implements InviteController {
-    ThreadPoolExecutor singlePool = new ThreadPoolExecutor(1,1,0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    @Autowired
+    private ThreadPoolExecutor initEventProcessThreadPool;
 
     @Autowired
     private InviteService inviteService;
 
     @Override
     public Result handleInit() {
-        singlePool.execute(() -> inviteService.init());
+        initEventProcessThreadPool.execute(() -> inviteService.init());
 
         return Result.newSuccessResult();
     }
@@ -80,7 +81,7 @@ public class InviteControllerImpl implements InviteController {
 
     @Override
     public Result handleAddCache() {
-        singlePool.execute(() -> inviteService.initCaching());
+        initEventProcessThreadPool.execute(() -> inviteService.initCaching());
         return Result.newSuccessResult();
     }
 
