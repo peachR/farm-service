@@ -4,6 +4,7 @@ import com.yiyi.farm.enumeration.BaseEnum;
 import com.yiyi.farm.util.EnumUtil;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.MappedJdbcTypes;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -16,6 +17,7 @@ import java.sql.SQLException;
  * @description 实现数据库varchar与枚举类的相互映射
  * @param <E>
  */
+@MappedJdbcTypes(value = JdbcType.INTEGER)
 public class EnumTypeHandler<E extends Enum<?> & BaseEnum> extends BaseTypeHandler<BaseEnum> {
 
     private Class<E> type;

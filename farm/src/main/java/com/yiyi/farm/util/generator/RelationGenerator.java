@@ -1,17 +1,15 @@
 package com.yiyi.farm.util.generator;
 
+import com.yiyi.farm.util.RedisPrefixUtil;
+
 import javax.management.relation.Relation;
 
-public class RelationGenerator implements KeyGenerator {
+public class RelationGenerator extends KeyGenerator {
 
     private RelationGenerator(){}
 
-    private final String PREFIX = "inviteRelation:";
+    private final String PREFIX = RedisPrefixUtil.TABLE_INVITE_RELATIONTREE_PREFIX;
 
-    @Override
-    public String getKey(String phone) {
-        return PREFIX + phone;
-    }
 
     @Override
     public String getPrefix(){

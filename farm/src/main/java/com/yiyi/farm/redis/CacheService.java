@@ -29,7 +29,7 @@ public class CacheService extends CachingConfigurerSupport{
     private RedisConn redisConn;
 
     /**
-     * 生产key的策略
+     * 默认生产key的策略
      *
      * @return
      */
@@ -54,8 +54,8 @@ public class CacheService extends CachingConfigurerSupport{
     }
 
     /**
-     * 管理缓存
-     *
+     * 管理缓存器bean
+     * 注册Redis缓存管理器
      * @param redisTemplate
      * @return
      */
@@ -108,6 +108,7 @@ public class CacheService extends CachingConfigurerSupport{
         jackson2JsonRedisSerializer.setObjectMapper(om);
         //值序列化为json
         template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
         template.afterPropertiesSet();
         return template;
     }

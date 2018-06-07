@@ -9,8 +9,10 @@ import java.util.List;
  * @date 2018-05-04 15:12:11
  * @description redis主键生成器
  */
-public interface KeyGenerator {
-    String getKey(String phone);
-    String getPrefix();
+public abstract class KeyGenerator {
+    public String getKey(String str){
+        return getPrefix() + str;
+    }
+    public abstract String getPrefix();
 
 }

@@ -1,14 +1,11 @@
 package com.yiyi.farm.util.generator;
 
-public class InfoGenerator implements KeyGenerator {
+import com.yiyi.farm.util.RedisPrefixUtil;
+
+public class InfoGenerator extends KeyGenerator {
     private InfoGenerator(){}
 
-    private final String PREFIX = "info:";
-
-    @Override
-    public String getKey(String phone) {
-        return PREFIX + phone;
-    }
+    private final String PREFIX = RedisPrefixUtil.TABLE_INVITE_INFO_PREFIX;
 
     @Override
     public String getPrefix(){

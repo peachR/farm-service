@@ -11,12 +11,20 @@ public class AccessAuthEntity {
     private boolean isLogin;
     private String[] permission;
 
+    public AccessAuthEntity(){}
+
     public AccessAuthEntity(String url, String methodName, HttpMethodEnum httpMethodEnum, boolean isLogin, String[] permission) {
         this.url = url;
         this.methodName = methodName;
         this.httpMethodEnum = httpMethodEnum;
         this.isLogin = isLogin;
         this.permission = permission;
+    }
+
+    public static AccessAuthEntity ofNullable(String url, String methodName, HttpMethodEnum httpMethodEnum, boolean isLogin, String[] permission){
+        if(url == null || httpMethodEnum == null)
+            return null;
+        return new AccessAuthEntity(url, methodName, httpMethodEnum, isLogin, permission);
     }
 
     public String getUrl() {

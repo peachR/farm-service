@@ -32,7 +32,7 @@ public final class AnnotationUtil {
      * @return
      */
     public static <T extends Annotation> Optional<T> getAnnotationValueByMethod(Method method, Class<T> annotationClazz){
-        return Optional.ofNullable((T)method.getAnnotation(annotationClazz));
+        return Optional.ofNullable(method.getAnnotation(annotationClazz));
     }
 
     /**
@@ -43,6 +43,6 @@ public final class AnnotationUtil {
      * @return
      */
     public static <T extends Annotation> Optional<T> getAnnotationValueByField(Field field, Class<T> annotationClazz){
-        return Optional.ofNullable((T)field.getAnnotation(annotationClazz));
+        return Optional.ofNullable(field.getAnnotation(annotationClazz));
     }
 }

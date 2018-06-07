@@ -1,9 +1,10 @@
 package com.yiyi.farm;
 
-import org.aspectj.lang.annotation.Aspect;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+@EnableTransactionManagement
 @SpringBootApplication
 public class FarmApplication {
 

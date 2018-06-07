@@ -1,6 +1,5 @@
 package com.yiyi.farm.service.invite;
 
-import com.yiyi.farm.controller.invite.InviteController;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
@@ -11,14 +10,10 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.websocket.Session;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,12 +35,18 @@ public class InviteServiceImpl implements InviteService {
 
     private List<InviteInfoEntity> nowNodes;
 
+    private Map<String, List<InviteInfoEntity>> cacheMap;
+
 
     /**
      * 线程池，用于多线程查询子孙节点
      */
-    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new ArrayBlockingQueue<>(2000));
+    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100, 400,45, TimeUnit.SECONDS,new ArrayBlockingQueue<>(819200));
 
+    /**
+     * 缓存初始化(缓存预热)
+     * @return
+     */
     @Override
     public boolean initCaching(){
         inviteCache.clearCache();
@@ -60,9 +61,12 @@ public class InviteServiceImpl implements InviteService {
      * 初始化关系树
      */
     public void init(){
+        long start = System.nanoTime();
         clearRelation();
         insertRelation();
         recordTime();
+        clearCache();
+        System.out.println("init over: " + ((System.nanoTime() - start) / 1_000_000));
     }
 
 
@@ -435,14 +439,43 @@ public class InviteServiceImpl implements InviteService {
      * @param parents
      * @return map 键为父节点值为子节点
      */
-    private Map<InviteInfoEntity, List<InviteInfoEntity>> findChild(List<InviteInfoEntity> parents) {
+    private Map<InviteInfoEntity, List<InviteInfoEntity>> findChildAndBuildRelationMap(List<InviteInfoEntity> parents) {
+        //记录父节点与子节点对应关系，一个父节点可以有多个子节点
         Map<InviteInfoEntity, List<InviteInfoEntity>> relationMap = new ConcurrentHashMap<>();
-        parents.parallelStream().forEach(info -> {
-            List<InviteInfoEntity> childs = infoDao.findChilds(info.getUid());
-            childs.parallelStream().forEach(child -> child.setHigh(info.getHigh() + 1));
-            relationMap.put(info, childs);
+        cacheInviteInfoByUpPalyerPhone(infoDao.findAll());
+
+        parents.parallelStream().forEach(parent -> {
+            List<InviteInfoEntity> childs = cacheMap.get(parent.getPhone());
+            setChildNodeHigh(parent, childs);
+            relationMap.put(parent, childs);
         });
+
+//        parents.parallelStream().forEach(parent -> {
+//            List<InviteInfoEntity> childs = infoDao.findChilds(parent.getUid());
+//            setChildNodeHigh(parent, childs);
+//            relationMap.put(parent, childs);
+//        });
+//        List<CompletableFuture<List<InviteInfoEntity>>> tasks = parents.stream().map(parent -> CompletableFuture.supplyAsync(() -> {
+//            List<InviteInfoEntity> childs = infoDao.findChilds(parent.getUid());
+//            setChildNodeHigh(parent, childs);
+//            relationMap.put(parent, childs);
+//            return childs;
+//        }, executor)).collect(Collectors.toList());
+//        tasks.stream().map(CompletableFuture::join).count();
         return relationMap;
+    }
+
+    private void cacheInviteInfoByUpPalyerPhone(List<InviteInfoEntity> all) {
+        cacheMap = all.stream().collect(Collectors.groupingBy(info -> info.getUpPlayerPhone()));
+    }
+
+    //为子节点设定高度，高度为父节点+1
+    private void setChildNodeHigh(InviteInfoEntity parent, List<InviteInfoEntity> childs) {
+        childs.parallelStream().forEach(child -> child.setHigh(parent.getHigh() + 1));
+    }
+
+    private void clearCache(){
+        cacheMap = null;
     }
 
     /**
@@ -464,31 +497,29 @@ public class InviteServiceImpl implements InviteService {
      * @return
      */
     private List<InviteRelationEntity> buildRelation(List<InviteInfoEntity> list){
-        List<InviteRelationEntity> result = new ArrayList<>(list.size());//本层关系节点
-        Map<InviteInfoEntity, List<InviteInfoEntity>> map = findChild(list);
-        List<InviteInfoEntity> nextNodes = new ArrayList<>();
-        Set<Map.Entry<InviteInfoEntity, List<InviteInfoEntity>>> sets = map.entrySet();
-//        sets.parallelStream().forEach(entry -> {
-////
-////        });
+        List<InviteRelationEntity> relationEntityList = new ArrayList<>(list.size());//本层关系节点
+        Map<InviteInfoEntity, List<InviteInfoEntity>> relationMap = findChildAndBuildRelationMap(list);
+        List<InviteInfoEntity> nextNodes = new ArrayList<>();//下一层孩子集合
+        Set<Map.Entry<InviteInfoEntity, List<InviteInfoEntity>>> sets = relationMap.entrySet();
         for(Map.Entry<InviteInfoEntity, List<InviteInfoEntity>> entry: sets){
             InviteInfoEntity parent = entry.getKey();
             List<InviteInfoEntity> children = entry.getValue();
             if(children == null || children.size() == 0){
-                buildRelationAndAdd(result, parent, null);
+                buildRelationAndAdd(relationEntityList, parent, null);
             }else {
                 for (InviteInfoEntity child : children) {//每个invite节点有一个孩子就有一个对应的关系节点
-                    buildRelationAndAdd(result, parent, child);
-                    if (result.size() > 1000) {
-                        relationDao.insertRelation(result);
-                        result = new ArrayList<>();
+                    buildRelationAndAdd(relationEntityList, parent, child);
+                    if (relationEntityList.size() > 1000) {
+                        relationDao.insertRelation(relationEntityList);
+                        //relationEntityList = new ArrayList<>();
+                        relationEntityList.clear();
                     }
                     nextNodes.add(child);//记录孩子节点集合作为下一次迭代的父节点
                 }
             }
         }
         nowNodes = nextNodes;
-        return result;
+        return relationEntityList;
     }
 
     /**

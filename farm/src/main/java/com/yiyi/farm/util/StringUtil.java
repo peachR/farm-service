@@ -36,6 +36,11 @@ public final class StringUtil {
         return target.trim().split(dot);
     }
 
+    /**
+     * 去除url头尾的反斜杠(如果存在)
+     * @param url
+     * @return
+     */
     public static String trimUrl(String url){
         if(url.startsWith("/")){
             url = url.substring(1, url.length());
@@ -48,14 +53,40 @@ public final class StringUtil {
         return url;
     }
 
+    /**
+     * 处理url，去除头尾反斜杠，将所有{..}替换为*,去除所有/
+     * @param url
+     * @return
+     */
     public static String handleUrl(String url){
         url = trimUrl(url);
         url = replaceTo(url, "\\{.*\\}", "*");
+        url = replaceTo(url, "/", "");
         return url;
     }
 
-    private static String replaceTo(String who, String from, String to){
+    /**
+     * 将字符串所有{@code from}字符替换为{@code to}
+     * @param who 需要处理的字符串
+     * @param from 需要被替换的字符串
+     * @param to 替换为的内容
+     * @return 替换后的字符串
+     */
+    public static String replaceTo(String who, String from, String to){
         who = who.replaceAll(from, to);
         return who;
     }
+
+    /**
+     * 将字符串中为{@code from}的字符替换为{@code to}
+     * @param who
+     * @param from
+     * @param to
+     * @return
+     */
+    public static String replaceTo(String who, char from, char to){
+        who = who.replace(from, to);
+        return who;
+    }
+
 }

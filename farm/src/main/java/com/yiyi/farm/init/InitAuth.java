@@ -8,13 +8,11 @@ import com.yiyi.farm.enumeration.http.HttpMethodEnum;
 import com.yiyi.farm.facade.redis.RedisService;
 import com.yiyi.farm.init.state.*;
 import com.yiyi.farm.util.*;
+import com.yiyi.farm.util.generator.AccessAuthGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -27,6 +25,7 @@ import java.util.Map;
  * @description 初始化权限信息
  */
 @AuthScan("com.yiyi.farm.controller")
+@Component
 public class InitAuth implements CommandLineRunner {
 
     @Autowired
@@ -50,64 +49,79 @@ public class InitAuth implements CommandLineRunner {
 
         List<Class<?>> classes = ClassUtil.getClasses(pkgName);
         for(Class<?> clazz : classes){
+            if(!clazz.isInterface())
+                continue;
             Method[] methods = clazz.getMethods();
             if(ArrayUtil.isEmpty(methods))
                 continue;
             else{
-                buildAccessMethod(methods);
+                String prefixUrl = getPrefixUrl(clazz);
+                buildAccessMethod(methods, StringUtil.handleUrl(prefixUrl));
             }
         }
 
-        redisService.hmset(RedisPrefixUtil.ACCESS_AUTH_PREFIX, this.accessAuthMap, null);
+        redisService.hmset(RedisPrefixUtil.ACCESS_AUTH_PREFIX, this.accessAuthMap);
     }
 
-    private void buildAccessMethod(Method[] methods){
+    /**
+     * 获取url前缀，即申明在类上的RequestMapping的值
+     * @param clazz
+     * @return
+     */
+    private String getPrefixUrl(Class<?> clazz) {
+        String prefix = "";
+        if(clazz.isAnnotationPresent(RequestMapping.class)){
+            RequestMapping requestMapping = clazz.getAnnotation(RequestMapping.class);
+            prefix = requestMapping.value()[0];
+        }
+        return prefix;
+    }
+
+    /**
+     * 构建所有方法的权限实体，存在映射表中
+     * 键由{@code generateKey}方法生成
+     * @param methods
+     */
+    private void buildAccessMethod(Method[] methods, String prefixUrl){
         final Map<String, AccessAuthEntity> accessAuthEntityMap = this.accessAuthMap;
         for(Method method : methods){
-            AccessAuthEntity accessAuthEntity = buildAccess(method);
-            String key = generateKey(accessAuthEntity);
-            accessAuthEntityMap.put(key, accessAuthEntity);
+            AccessAuthEntity accessAuthEntity = buildAccess(method, prefixUrl);
+            if(accessAuthEntity != null) {
+                String key = generateKey(accessAuthEntity);
+                accessAuthEntityMap.put(key, accessAuthEntity);
+            }
         }
     }
 
+    /**
+     * 根据权限实体，生成其保存在redis中的唯一键
+     * @param accessAuthEntity
+     * @return
+     */
     private String generateKey(AccessAuthEntity accessAuthEntity){
         HttpMethodEnum httpMethodEnum = accessAuthEntity.getHttpMethodEnum();
-        return httpMethodEnum.getMsg() + accessAuthEntity.getUrl();
+        return AccessAuthGenerator.getInstance().getKey(httpMethodEnum.getMsg() + accessAuthEntity.getUrl());
     }
 
-    private AccessAuthEntity buildAccess(Method method){
+    /**
+     * 根据方法，构建方法的权限实体
+     * @param method
+     * @param prefix 前缀，class上RequestMapping的url
+     * @return
+     */
+    private AccessAuthEntity buildAccess(Method method, String prefix){
         boolean isLogin = AnnotationUtil.getAnnotationValueByMethod(method, Login.class)
-                .map(login -> ((Login)login).value()).orElse(false);
+                .map(login -> login.value()).orElse(false);
         String[] permssion = AnnotationUtil.getAnnotationValueByMethod(method, Permission.class)
-                .map(permission -> ((Permission)permission).value()).orElse(EMPTY_ARRAY);
+                .map(permission -> permission.value()).orElse(EMPTY_ARRAY);
 
-        AnnotationState annotationState = getMethodAnnotation(method);
+        AnnotationState annotationState = AnnotationStateFactory.getMethodAnnotation(method);
         String url = annotationState.getUrl();
         HttpMethodEnum httpMethodEnum = annotationState.getHttpMethod();
+        if(permssion != EMPTY_ARRAY)
+            isLogin = true;
 
-        return new AccessAuthEntity(url,method.getName(),httpMethodEnum,isLogin,permssion);
+        return AccessAuthEntity.ofNullable(prefix + url,method.getName(),httpMethodEnum,isLogin,permssion);
 
     }
-
-    @SuppressWarnings("unchecked")
-    private AnnotationState getMethodAnnotation(Method method) {
-        GetMapping getMapping = AnnotationUtil.<GetMapping>getAnnotationValueByMethod(method, GetMapping.class)
-                .orElse(null);
-        PostMapping postMapping = AnnotationUtil.<PostMapping>getAnnotationValueByMethod(method, PostMapping.class)
-                .orElse(null);
-        PutMapping putMapping = AnnotationUtil.<PutMapping>getAnnotationValueByMethod(method, PutMapping.class)
-                .orElse(null);
-        DeleteMapping deleteMapping = AnnotationUtil.<DeleteMapping>getAnnotationValueByMethod(method, DeleteMapping.class)
-                .orElse(null);
-        if(getMapping != null)
-            return new GetAnnotation(getMapping);
-        else if(postMapping != null)
-            return new PostAnnotation(postMapping);
-        else if(putMapping != null)
-            return new PutAnnotation(putMapping);
-        else
-            return new DeleteAnnotation(deleteMapping);
-    }
-
-
 }

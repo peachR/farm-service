@@ -93,6 +93,8 @@ public interface RedisService {
      */
     <K,HK,HV> Map<HK,HV> hgetAll(final K key);
 
+    <K, HK, HV> HV hget(final K key, final HK hashKey);
+
     /**
      * 缓存一个列表
      * @param key 列表的键值

@@ -8,7 +8,7 @@ import java.lang.annotation.*;
  * @description 用于控制器方法之上，表示该方法是否需要登录
  */
 //只有方法可以使用该注解
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Login {

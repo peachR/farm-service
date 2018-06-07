@@ -106,6 +106,12 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public <K, HK, HV> HV hget(K key, HK hashKey) {
+        HashOperations<K, HK, HV> operations = redisTemplate.opsForHash();
+        return operations.get(key, hashKey);
+    }
+
+    @Override
     public <K, LV> boolean leftPushAll(K key, Long expireTime, LV ...values) {
         ListOperations<K, LV> operations = redisTemplate.opsForList();
         operations.leftPushAll(key,values);

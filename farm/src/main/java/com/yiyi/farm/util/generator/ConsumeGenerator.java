@@ -1,14 +1,11 @@
 package com.yiyi.farm.util.generator;
 
-public class ConsumeGenerator implements KeyGenerator {
+import com.yiyi.farm.util.RedisPrefixUtil;
+
+public class ConsumeGenerator extends KeyGenerator {
     private ConsumeGenerator(){}
 
-    private final String PREFIX = "consume:";
-
-    @Override
-    public String getKey(String phone) {
-        return PREFIX + phone;
-    }
+    private final String PREFIX = RedisPrefixUtil.TABLE_CONSUME_PREFIX;
 
     @Override
     public String getPrefix(){
