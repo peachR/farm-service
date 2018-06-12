@@ -13,6 +13,7 @@ import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.websocket.Session;
@@ -40,6 +41,8 @@ public class InviteServiceImpl implements InviteService {
 
     private List<InviteInfoEntity> nowNodes;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 线程池，用于多线程查询子孙节点
@@ -60,9 +63,11 @@ public class InviteServiceImpl implements InviteService {
      * 初始化关系树
      */
     public void init(){
+        redisTemplate.opsForValue().set("busy","yes");
         clearRelation();
         insertRelation();
         recordTime();
+        redisTemplate.delete("busy");
     }
 
 
