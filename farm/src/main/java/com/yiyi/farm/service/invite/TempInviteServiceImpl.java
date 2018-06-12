@@ -257,6 +257,9 @@ public class TempInviteServiceImpl {
     }
 
     public Map<String, ChildStatistics> findStatistics(String phone, InviteReq inviteReq){
+        if(findChildrenByPhone(phone).size() == 0){
+            return null;
+        }
         Queue<String> phones = new ConcurrentLinkedQueue<>();
         phones.offer(phone);
         //层数
