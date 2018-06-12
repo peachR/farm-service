@@ -11,6 +11,7 @@ import java.util.Map;
 
 @Mapper
 public interface InviteRelationDao {
+    int checkUnregister(@Param("phone")String phone);
     void insertRelation(@Param("relationList")List<InviteRelationEntity> relation);
     List<InviteRelationEntity> findAllRelation();
     List<InviteRelationEntity> findChildByPhone(@Param("phone") String phone);

@@ -91,4 +91,8 @@
     <select id="isNewCustomer" resultType="int">
         SELECT count(1) FROM farm_center.invite_info WHERE phone=#{phone} AND time BETWEEN #{startTime} AND #{endTime}
     </select>
+
+    <select id="checkUnregister" resultType="int">
+        select count(1) from invite.relationtree where phone = #{phone};
+    </select>
 </mapper>

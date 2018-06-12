@@ -220,7 +220,7 @@ public class TempInviteServiceImpl {
         return false;
     }
 
-    
+
     /**
      * 获取此phone在这个时间段内的消费
      * @param phone
@@ -257,8 +257,12 @@ public class TempInviteServiceImpl {
         }
     }
 
+    private boolean isRegistered(String phone){
+        boolean hasKey = redisTemplate.hasKey("inviteRelation:"+phone);
+        return hasKey;
+    }
     public Map<String, ChildStatistics> findStatistics(String phone, InviteReq inviteReq){
-        if(findChildrenByPhone(phone).size() == 0){
+        if(!isRegistered(phone)){
             return null;
         }
         Queue<String> phones = new ConcurrentLinkedQueue<>();
