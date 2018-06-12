@@ -41,8 +41,6 @@ public class InviteServiceImpl implements InviteService {
 
     private List<InviteInfoEntity> nowNodes;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
 
     /**
      * 线程池，用于多线程查询子孙节点
@@ -63,11 +61,9 @@ public class InviteServiceImpl implements InviteService {
      * 初始化关系树
      */
     public void init(){
-        redisTemplate.opsForValue().set("busy","yes");
         clearRelation();
         insertRelation();
         recordTime();
-        redisTemplate.delete("busy");
     }
 
 
