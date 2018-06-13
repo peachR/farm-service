@@ -152,13 +152,21 @@ public class TempInviteServiceImpl {
      * 清空redis
      */
     private void flushDB(){
-        redisTemplate.execute(new RedisCallback() {
-            @Override
-            public Object doInRedis(RedisConnection redisConnection) throws DataAccessException {
-                redisConnection.flushDb();
-                return "";
-            }
-        });
+//        redisTemplate.execute(new RedisCallback() {
+//            @Override
+//            public Object doInRedis(RedisConnection redisConnection) throws DataAccessException {
+//                redisConnection.flushDb();
+//                return "";
+//            }
+//        });
+
+        Set<String> consumekeys = redisTemplate.keys("consume:"+"*");
+        Set<String> infokeys = redisTemplate.keys("info:"+"*");
+        Set<String> inviteRelationKeys = redisTemplate.keys("inviteRelation:"+"*");
+        redisTemplate.delete(consumekeys);
+        redisTemplate.delete(infokeys);
+        redisTemplate.delete(inviteRelationKeys);
+        redisTemplate.delete("cacheOrNot");
     }
 
     /**
