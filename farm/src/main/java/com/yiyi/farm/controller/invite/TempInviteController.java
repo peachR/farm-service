@@ -1,5 +1,6 @@
 package com.yiyi.farm.controller.invite;
 
+import com.yiyi.farm.facade.redis.RedisService;
 import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.rsp.Result;
 import com.yiyi.farm.service.invite.TempInviteServiceImpl;
@@ -26,7 +27,7 @@ public class TempInviteController {
     private TempInviteServiceImpl inviteService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisService redisService;
 
     @PostMapping("initCache")
     public void initCache() throws ExecutionException, InterruptedException {
@@ -81,7 +82,7 @@ public class TempInviteController {
     }
 
     private boolean isBusy(){
-        boolean hasKey = redisTemplate.hasKey("busy");
+        boolean hasKey = redisService.exist("busy");
         return hasKey;
     }
 }

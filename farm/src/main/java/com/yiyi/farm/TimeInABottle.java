@@ -1,5 +1,6 @@
 package com.yiyi.farm;
 
+import com.yiyi.farm.facade.redis.RedisService;
 import com.yiyi.farm.service.invite.InviteServiceImpl;
 import com.yiyi.farm.service.invite.TempInviteServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,14 @@ public class TimeInABottle {
     private InviteServiceImpl inviteService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisService redisService;
+
     @Scheduled(cron = " 0 0 2 * * ?")
     public void rebuildTreeAndCache() throws ExecutionException, InterruptedException {
-        redisTemplate.opsForValue().set("busy","yes");
+        redisService.set("busy","yes");
         inviteService.init();
         tempInviteServiceinviteService.initCache();
-        redisTemplate.delete("busy");
+        redisService.remove("busy");
     }
 
 

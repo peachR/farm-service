@@ -1,6 +1,5 @@
 package com.yiyi.farm.service.invite;
 
-import com.yiyi.farm.controller.invite.InviteController;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
@@ -11,15 +10,10 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.websocket.Session;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
