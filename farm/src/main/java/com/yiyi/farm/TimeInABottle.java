@@ -27,11 +27,11 @@ public class TimeInABottle {
     @Autowired
     private RedisService redisService;
 
-    @Scheduled(cron = " 0 0 2 * * ?")
+    @Scheduled(cron = " 0 0 23 * * ?")
     public void rebuildTreeAndCache() throws ExecutionException, InterruptedException {
         redisService.set("busy","yes");
-        inviteService.init();
-        tempInviteServiceinviteService.initCache();
+        inviteService.newInit();
+        //tempInviteServiceinviteService.initCache();
         redisService.remove("busy");
     }
 

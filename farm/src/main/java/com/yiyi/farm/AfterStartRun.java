@@ -14,9 +14,9 @@ public class AfterStartRun implements CommandLineRunner {
     RedisTemplate redisTemplate;
     @Override
     public void run(String... args) throws Exception {
-        String cacheOrNot = (String) redisTemplate.opsForValue().get("cacheOrNot");
-        if(cacheOrNot == null){
-            inviteService.initCache();
-        }
+//        String cacheOrNot = (String) redisTemplate.opsForValue().get("cacheOrNot");
+//        if(cacheOrNot == null){
+//            inviteService.initCache();
+//        }
     }
 }
