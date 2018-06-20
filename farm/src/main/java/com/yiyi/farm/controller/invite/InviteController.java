@@ -13,6 +13,9 @@ public interface InviteController {
     @PutMapping("init")
     public Result handleInit();
 
+    @PutMapping("newInit")
+    public Result handleNewInit();
+
     @GetMapping("childByPhone")
     public Result handleFindChildByPhone(InviteReq invite);
 

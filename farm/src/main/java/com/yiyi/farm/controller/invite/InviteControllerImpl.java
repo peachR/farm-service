@@ -31,6 +31,13 @@ public class InviteControllerImpl implements InviteController {
     }
 
     @Override
+    public Result handleNewInit(){
+        singlePool.execute(() -> inviteService.newInit());
+
+        return Result.newSuccessResult();
+    }
+
+    @Override
     public Result handleFindChildByPhone(InviteReq invite) {
         String[] phones = StringUtil.split(invite.getPhone(),";");
         Queue<InviteRelationEntity> list = inviteService.findChildByPhone(phones[0]);
