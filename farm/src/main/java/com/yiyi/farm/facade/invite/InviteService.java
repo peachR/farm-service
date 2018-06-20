@@ -14,6 +14,8 @@ import java.util.Queue;
 import java.util.concurrent.Executor;
 
 public interface InviteService {
+
+    void newInit();
     boolean initCaching();
 
     void init();

@@ -63,7 +63,7 @@ public class InviteCache {
     }
 
     /**
-     * 缓存Invite_info表，按照电话号码分类
+     * 缓存Log_consume表，按照电话号码分类
      * @return
      */
     public boolean cacheLogConsume(){
@@ -132,6 +132,12 @@ public class InviteCache {
         return redisService.lGetAll(key);
     }
 
+
+    public List<InviteInfoEntity> findChildByFather(String parentUid){
+        List<InviteInfoEntity> allInfoEntity = redisService.getAllListByPrefix("info:");
+        return  allInfoEntity.parallelStream().filter(info -> Objects.equals(parentUid, info.getUpPlayerUid()))
+                                        .collect(Collectors.toList());
+    }
 
     /**
      * 缓存列表

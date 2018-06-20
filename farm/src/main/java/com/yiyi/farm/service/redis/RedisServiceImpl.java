@@ -162,6 +162,16 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public <K, LV> List<LV> getAllListByPrefix(K prefix){
+        Set<K> keys = redisTemplate.keys(prefix);
+        List<LV> result = new ArrayList<>(keys.size());
+        for(K key : keys){
+            result.addAll(lGetAll(key));
+        }
+        return result;
+    }
+
+    @Override
     public void watch(String key){
         try{
             redisTemplate.watch(key);

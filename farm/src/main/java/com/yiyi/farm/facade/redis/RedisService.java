@@ -155,6 +155,15 @@ public interface RedisService {
      */
     <K, LV> List<LV> lGetAll(K key);
 
+    /**
+     * 根据前缀获取所有以这个前缀开头key的列表的所有值，并合并到一个list中返回
+     * @param prefix
+     * @param <K>
+     * @param <LV>
+     * @return
+     */
+    <K, LV> List<LV> getAllListByPrefix(K prefix);
+
     void watch(String key);
 
     void watch(Collection<String> keys);

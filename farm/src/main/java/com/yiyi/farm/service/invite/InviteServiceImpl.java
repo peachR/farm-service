@@ -41,6 +41,23 @@ public class InviteServiceImpl implements InviteService {
      */
     private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new ArrayBlockingQueue<>(2000));
 
+
+    @Override
+    public void newInit(){
+        clearRelation();
+        inviteCache.clearCache();
+        inviteCache.cacheInviteInfo();
+        inviteCache.cacheLogConsume();
+
+        insertRelation();
+        recordTime();
+        inviteCache.cahceInviteRelation();
+    }
+
+    /**
+     * 初始化緩存
+     * @return
+     */
     @Override
     public boolean initCaching(){
         inviteCache.clearCache();
@@ -433,7 +450,7 @@ public class InviteServiceImpl implements InviteService {
     private Map<InviteInfoEntity, List<InviteInfoEntity>> findChild(List<InviteInfoEntity> parents) {
         Map<InviteInfoEntity, List<InviteInfoEntity>> relationMap = new ConcurrentHashMap<>();
         parents.parallelStream().forEach(info -> {
-            List<InviteInfoEntity> childs = infoDao.findChilds(info.getUid());
+            List<InviteInfoEntity> childs = inviteCache.findChildByFather(info.getUid());
             childs.parallelStream().forEach(child -> child.setHigh(info.getHigh() + 1));
             relationMap.put(info, childs);
         });
