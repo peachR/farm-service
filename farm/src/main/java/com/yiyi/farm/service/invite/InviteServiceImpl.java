@@ -1,5 +1,6 @@
 package com.yiyi.farm.service.invite;
 
+import com.yiyi.farm.annotation.PerfomanceLog;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
@@ -43,6 +44,7 @@ public class InviteServiceImpl implements InviteService {
 
 
     @Override
+    @PerfomanceLog
     public void newInit(){
         clearRelation();
         inviteCache.clearCache();
