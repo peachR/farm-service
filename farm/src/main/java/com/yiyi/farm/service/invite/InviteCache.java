@@ -1,6 +1,7 @@
 package com.yiyi.farm.service.invite;
 
 
+import com.yiyi.farm.annotation.MethodLog;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
@@ -40,6 +41,8 @@ public class InviteCache {
     @Autowired
     RedisService redisService;
 
+    private List<InviteInfoEntity> allInfoEntity;
+
     /**
      * 清除缓存
      * @return
@@ -63,7 +66,7 @@ public class InviteCache {
     }
 
     /**
-     * 缓存Invite_info表，按照电话号码分类
+     * 缓存Log_consume表，按照电话号码分类
      * @return
      */
     public boolean cacheLogConsume(){
@@ -132,6 +135,17 @@ public class InviteCache {
         return redisService.lGetAll(key);
     }
 
+    @MethodLog
+    public List<InviteInfoEntity> findChildByFather(String parentUid){
+        if(CollectionUtil.isEmpty(allInfoEntity)) {
+            synchronized (this) {
+                this.allInfoEntity = redisService.getAllListByPrefix("info:*");
+                System.out.println("allInfo init: " + allInfoEntity);
+            }
+        }
+        return  allInfoEntity.parallelStream().filter(info -> Objects.equals(parentUid, info.getUpPlayerUid()))
+                                        .collect(Collectors.toList());
+    }
 
     /**
      * 缓存列表

@@ -1,6 +1,6 @@
 package com.yiyi.farm.service.invite;
 
-import com.yiyi.farm.controller.invite.InviteController;
+import com.yiyi.farm.annotation.PerfomanceLog;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
@@ -11,15 +11,10 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.websocket.Session;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +42,24 @@ public class InviteServiceImpl implements InviteService {
      */
     private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(100,Integer.MAX_VALUE,45, TimeUnit.SECONDS,new ArrayBlockingQueue<>(2000));
 
+
+    @Override
+    @PerfomanceLog
+    public void newInit(){
+        clearRelation();
+        inviteCache.clearCache();
+        inviteCache.cacheInviteInfo();
+        inviteCache.cacheLogConsume();
+
+        insertRelation();
+        recordTime();
+        inviteCache.cahceInviteRelation();
+    }
+
+    /**
+     * 初始化緩存
+     * @return
+     */
     @Override
     public boolean initCaching(){
         inviteCache.clearCache();
@@ -439,7 +452,7 @@ public class InviteServiceImpl implements InviteService {
     private Map<InviteInfoEntity, List<InviteInfoEntity>> findChild(List<InviteInfoEntity> parents) {
         Map<InviteInfoEntity, List<InviteInfoEntity>> relationMap = new ConcurrentHashMap<>();
         parents.parallelStream().forEach(info -> {
-            List<InviteInfoEntity> childs = infoDao.findChilds(info.getUid());
+            List<InviteInfoEntity> childs = inviteCache.findChildByFather(info.getUid());
             childs.parallelStream().forEach(child -> child.setHigh(info.getHigh() + 1));
             relationMap.put(info, childs);
         });

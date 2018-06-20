@@ -1,5 +1,7 @@
 package com.yiyi.farm.facade.redis;
 
+import com.yiyi.farm.redis.RedisTransaction;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -59,6 +61,14 @@ public interface RedisService {
      * @return
      */
     boolean set(final String key, Serializable value, long expireTime);
+
+    /**
+     * 添加key-value,当且仅当key不存在时才会添加
+     * @param key
+     * @param value
+     * @return {@code true}key不存在且添加成功
+     */
+    boolean setIfAbsent(final String key, Serializable value);
 
     /**
      * 添加一个hash表
@@ -144,4 +154,28 @@ public interface RedisService {
      * @return
      */
     <K, LV> List<LV> lGetAll(K key);
+
+    /**
+     * 根据前缀获取所有以这个前缀开头key的列表的所有值，并合并到一个list中返回
+     * @param prefix
+     * @param <K>
+     * @param <LV>
+     * @return
+     */
+    <K, LV> List<LV> getAllListByPrefix(K prefix);
+
+    void watch(String key);
+
+    void watch(Collection<String> keys);
+
+    void unwatch();
+
+    List<Object> doTransaction(RedisTransaction transaction);
+
+    void setExpire(String key, long expire);
+
+    long getExpire(String key);
+
+
+
 }
