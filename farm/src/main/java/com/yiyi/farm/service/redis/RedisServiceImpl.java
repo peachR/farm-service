@@ -1,6 +1,9 @@
 package com.yiyi.farm.service.redis;
 
 import com.yiyi.farm.facade.redis.RedisService;
+import com.yiyi.farm.redis.RedisTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
@@ -9,15 +12,14 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 
 @Service
 public class RedisServiceImpl implements RedisService {
+    private final Logger log = LoggerFactory.getLogger(RedisServiceImpl.class);
+
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -84,6 +86,21 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public boolean setIfAbsent(final String key, Serializable value){
+        boolean result =false;
+        try{
+            ValueOperations<Serializable, Serializable> operations = redisTemplate.opsForValue();
+            result = operations.setIfAbsent(key, value);
+        }catch (Exception ex){
+            remove(key);
+            result = false;
+            ex.printStackTrace();
+
+        }
+        return result;
+    }
+
+    @Override
     public <K, HK, HV> boolean hmset(K key, Map<HK, HV> map, Long expireTime) {
         HashOperations<K,HK,HV> operations = redisTemplate.opsForHash();
         operations.putAll(key, map);
@@ -142,5 +159,56 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public <K, LV> List<LV> lGetAll(K key){
         return lRange(key, 0, -1);
+    }
+
+    @Override
+    public void watch(String key){
+        try{
+            redisTemplate.watch(key);
+        }catch (Exception ex){
+            log.error("error in watch(String)", ex);
+        }
+    }
+
+    @Override
+    public void watch(Collection<String> keys){
+        try{
+            redisTemplate.watch(keys);
+        }catch (Exception ex){
+            log.error("error in watch(Collection", ex);
+        }
+    }
+
+    @Override
+    public void unwatch(){
+        try{
+            redisTemplate.unwatch();
+        }catch (Exception ex){
+            log.error("error in unwatch", ex);
+        }
+    }
+
+    @Override
+    public List<Object> doTransaction(RedisTransaction transaction){
+        List<Object> result;
+        try {
+            redisTemplate.multi();
+            transaction.transaction();
+            result= redisTemplate.exec();
+        }catch (Exception ex){
+            log.error("error in transaction", ex);
+            return null;
+        }
+        return result;
+    }
+
+    @Override
+    public void setExpire(String key, long expireTime){
+        redisTemplate.expire(key, expireTime, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public long getExpire(String key){
+        return redisTemplate.getExpire(key);
     }
 }
