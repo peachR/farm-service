@@ -1,6 +1,7 @@
 package com.yiyi.farm.util;
 
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peach
@@ -12,6 +13,6 @@ public final class TimeUtil {
     private TimeUtil(){}
 
     public static Timestamp getTimestamp(long millisecond){
-        return new Timestamp(millisecond);
+        return new Timestamp(TimeUnit.SECONDS.toMillis(millisecond));
     }
 }
