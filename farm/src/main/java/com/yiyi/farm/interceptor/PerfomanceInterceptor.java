@@ -32,7 +32,7 @@ public class PerfomanceInterceptor {
         }catch (Throwable ex){
             logger.error(AopUtil.getMethodName(joinPoint) + " error ");
         }
-        throw new RuntimeException("perfomance error");
+        throw new RuntimeException("perfomance error ： " + AopUtil.getMethodName(joinPoint));
     }
 
 }

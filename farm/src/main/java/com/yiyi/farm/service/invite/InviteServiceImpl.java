@@ -11,6 +11,7 @@ import com.yiyi.farm.req.invite.InviteReq;
 import com.yiyi.farm.tool.Pair;
 import com.yiyi.farm.tool.PosterityStatistics;
 import com.yiyi.farm.util.StringUtil;
+import com.yiyi.farm.util.generator.RelationGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,9 +52,9 @@ public class InviteServiceImpl implements InviteService {
         inviteCache.cacheInviteInfo();
         inviteCache.cacheLogConsume();
 
-        insertRelation();
+        insertRelation();//改为先缓存
+        persistRelation();
         recordTime();
-        inviteCache.cahceInviteRelation();
     }
 
     /**
@@ -468,8 +469,25 @@ public class InviteServiceImpl implements InviteService {
 
         while (nowNodes.size() != 0) {
             List<InviteRelationEntity> list = buildRelation(nowNodes);
-            relationDao.insertRelation(list);
+            //relationDao.insertRelation(list);
+            inviteCache.cacheCustomerable(list, RelationGenerator.getInstance());
         }
+    }
+
+    /**
+     * 持久化根据缓存relation
+     */
+    private void persistRelation(){
+        List<InviteRelationEntity> list = inviteCache.getRelationEntityByCache();
+        List<InviteRelationEntity> tmp = new ArrayList<>();
+        for(InviteRelationEntity inviteRelationEntity : list){
+            tmp.add(inviteRelationEntity);
+            if(tmp.size() >= 5000) {
+                relationDao.insertRelation(tmp);
+                tmp = new ArrayList<>();
+            }
+        }
+        relationDao.insertRelation(tmp);
     }
 
     /**
@@ -482,9 +500,7 @@ public class InviteServiceImpl implements InviteService {
         Map<InviteInfoEntity, List<InviteInfoEntity>> map = findChild(list);
         List<InviteInfoEntity> nextNodes = new ArrayList<>();
         Set<Map.Entry<InviteInfoEntity, List<InviteInfoEntity>>> sets = map.entrySet();
-//        sets.parallelStream().forEach(entry -> {
-////
-////        });
+
         for(Map.Entry<InviteInfoEntity, List<InviteInfoEntity>> entry: sets){
             InviteInfoEntity parent = entry.getKey();
             List<InviteInfoEntity> children = entry.getValue();
@@ -493,10 +509,10 @@ public class InviteServiceImpl implements InviteService {
             }else {
                 for (InviteInfoEntity child : children) {//每个invite节点有一个孩子就有一个对应的关系节点
                     buildRelationAndAdd(result, parent, child);
-                    if (result.size() > 1000) {
-                        relationDao.insertRelation(result);
-                        result = new ArrayList<>();
-                    }
+//                    if (result.size() > 1000) {
+//                        relationDao.insertRelation(result);
+//                        result = new ArrayList<>();
+//                    }
                     nextNodes.add(child);//记录孩子节点集合作为下一次迭代的父节点
                 }
             }

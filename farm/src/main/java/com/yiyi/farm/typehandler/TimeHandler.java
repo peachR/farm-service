@@ -5,6 +5,7 @@ import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
 import java.sql.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author  peach
@@ -14,7 +15,7 @@ import java.sql.*;
 public class TimeHandler extends BaseTypeHandler<Timestamp> {
     @Override
     public void setNonNullParameter(PreparedStatement preparedStatement, int i, Timestamp timestamp, JdbcType jdbcType) throws SQLException {
-        preparedStatement.setLong(i, timestamp.getTime());
+        preparedStatement.setLong(i, TimeUnit.MILLISECONDS.toSeconds(timestamp.getTime()));
     }
 
     @Override

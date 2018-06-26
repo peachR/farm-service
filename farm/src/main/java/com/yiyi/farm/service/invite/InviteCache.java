@@ -85,6 +85,11 @@ public class InviteCache {
         return true;
     }
 
+    public boolean cacheCustomerable(List<? extends Customerable> waitCachedList, KeyGenerator generator){
+        groupAndCachingList(waitCachedList, generator);
+        return true;
+    }
+
     /**
      * 从缓存中读取邀请信息数据，判断是否是新用户
      * @param phone
@@ -145,6 +150,10 @@ public class InviteCache {
         }
         return  allInfoEntity.parallelStream().filter(info -> Objects.equals(parentUid, info.getUpPlayerUid()))
                                         .collect(Collectors.toList());
+    }
+
+    public List<InviteRelationEntity> getRelationEntityByCache(){
+        return redisService.getAllListByPrefix("inviteRelation:*");
     }
 
     /**
