@@ -86,6 +86,18 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public Serializable getSet(final String key, Serializable value){
+        Serializable result = null;
+        try{
+            ValueOperations<Serializable, Serializable> operations = redisTemplate.opsForValue();
+            result = operations.getAndSet(key, value);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return result;
+    }
+
+    @Override
     public boolean setIfAbsent(final String key, Serializable value){
         boolean result =false;
         try{

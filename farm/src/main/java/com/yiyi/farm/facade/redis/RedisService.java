@@ -63,6 +63,14 @@ public interface RedisService {
     boolean set(final String key, Serializable value, long expireTime);
 
     /**
+     * 返回键的当前值，并设置新值，原子操作
+     * @param key
+     * @param value
+     * @return
+     */
+    Serializable getSet(final String key, Serializable value);
+
+    /**
      * 添加key-value,当且仅当key不存在时才会添加
      * @param key
      * @param value
