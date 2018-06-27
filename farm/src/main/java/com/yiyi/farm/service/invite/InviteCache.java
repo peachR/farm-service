@@ -5,16 +5,11 @@ import com.yiyi.farm.annotation.MethodLog;
 import com.yiyi.farm.dao.invite.ConsumeLogDao;
 import com.yiyi.farm.dao.invite.InviteInfoDao;
 import com.yiyi.farm.dao.invite.InviteRelationDao;
-import com.yiyi.farm.entity.invite.Customerable;
-import com.yiyi.farm.entity.invite.InviteInfoEntity;
-import com.yiyi.farm.entity.invite.InviteRelationEntity;
-import com.yiyi.farm.entity.invite.LogConsumeEntity;
+import com.yiyi.farm.dao.invite.RechargeLogDao;
+import com.yiyi.farm.entity.invite.*;
 import com.yiyi.farm.facade.redis.RedisService;
 import com.yiyi.farm.util.CollectionUtil;
-import com.yiyi.farm.util.generator.ConsumeGenerator;
-import com.yiyi.farm.util.generator.InfoGenerator;
-import com.yiyi.farm.util.generator.KeyGenerator;
-import com.yiyi.farm.util.generator.RelationGenerator;
+import com.yiyi.farm.util.generator.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +34,8 @@ public class InviteCache {
     private InviteRelationDao inviteRelationDao;
 
     @Autowired
+    private RechargeLogDao rechargeLogDao;
+    @Autowired
     RedisService redisService;
 
     private List<InviteInfoEntity> allInfoEntity;
@@ -48,7 +45,7 @@ public class InviteCache {
      * @return
      */
     public boolean clearCache(){
-        List<? extends KeyGenerator> generators = Arrays.asList(ConsumeGenerator.getInstance(), InfoGenerator.getInstance(), RelationGenerator.getInstance());
+        List<? extends KeyGenerator> generators = Arrays.asList(ConsumeGenerator.getInstance(), InfoGenerator.getInstance(), RelationGenerator.getInstance(),RechargeGenerator.getInstance());
         for(KeyGenerator generator : generators){
             redisService.removePattern(buildRemovePatternValue(generator.getPrefix()));
         }
@@ -72,6 +69,16 @@ public class InviteCache {
     public boolean cacheLogConsume(){
         List<LogConsumeEntity> allConsume = consumeLogDao.findAll();
         groupAndCachingList(allConsume, ConsumeGenerator.getInstance());
+        return true;
+    }
+
+    /**
+     * 缓存Log_recharge表，按照电话号码分类
+     * @return
+     */
+    public boolean cacheLogRecharge(){
+        List<LogRechargeEntity> allRecharge = rechargeLogDao.findAll();
+        groupAndCachingList(allRecharge, RechargeGenerator.getInstance());
         return true;
     }
 

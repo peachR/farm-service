@@ -33,7 +33,7 @@ public class TimeInABottle {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Scheduled(cron = " 0 0 23 * * ?")
+    @Scheduled(cron = " 0 30 6 * * ?")
     public void rebuildTreeAndCache() throws ExecutionException, InterruptedException {
         flushDB();
         redisService.set("busy","yes");

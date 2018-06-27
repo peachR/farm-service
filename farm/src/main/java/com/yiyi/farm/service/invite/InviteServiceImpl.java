@@ -51,7 +51,7 @@ public class InviteServiceImpl implements InviteService {
         inviteCache.clearCache();
         inviteCache.cacheInviteInfo();
         inviteCache.cacheLogConsume();
-
+        inviteCache.cacheLogRecharge();
         insertRelation();//改为先缓存
         persistRelation();
         recordTime();
