@@ -81,6 +81,20 @@ public class TempInviteController {
         return Result.newSuccessResult(phones);
     }
 
+    /**
+     * 获得一层的充值信息
+     * @return
+     */
+    @GetMapping("singlerecharge")
+    public Result<Map<String,Integer>> getSingleRecharge(InviteReq inviteReq){
+        if(isBusy()){
+            Result<Map<String,Integer>> result = Result.newFailureResult();
+            result.setErrorMsg("busy");
+            return result;
+        }
+        return Result.newSuccessResult(inviteService.findSingleRecharge(inviteReq));
+    }
+
     private boolean isBusy(){
         boolean hasKey = redisService.exist("busy");
         return hasKey;

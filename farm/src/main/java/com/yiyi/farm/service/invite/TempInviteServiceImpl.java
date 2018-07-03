@@ -8,6 +8,7 @@ import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.entity.invite.LogConsumeEntity;
 import com.yiyi.farm.entity.invite.LogRechargeEntity;
 import com.yiyi.farm.req.invite.InviteReq;
+import com.yiyi.farm.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -231,7 +232,7 @@ public class TempInviteServiceImpl {
     }
 
     /**
-     * 判断这个新增用户在这段时间内是否充值过
+     * 判断这个新增用户在这段时间内是否充值过，带时间
      * @param phone
      * @param inviteReq
      * @return
@@ -294,6 +295,48 @@ public class TempInviteServiceImpl {
         }
     }
 
+    /**
+     * 获取此号码第一层节点的充值信息
+     * @return
+     */
+    public Map<String,Integer> findSingleRecharge(InviteReq inviteReq){
+        //父节点
+        String phone = StringUtil.split(inviteReq.getPhone(),";")[0];
+        //所有子节点
+        Queue<String> phones = findChildrenByPhone(phone);
+        //统计信息
+        ChildStatistics thisLevelStatistics = new ChildStatistics();
+        List<CompletableFuture<Integer>> statisticsFutures = phones.stream()
+                .map(p->CompletableFuture.supplyAsync(()->{
+                    countSingleLevelJustForRecharge(thisLevelStatistics,p,inviteReq);
+                    return 0;
+                }))
+                .collect(Collectors.toList());
+        //等待统计结束
+        statisticsFutures.stream()
+                .map(CompletableFuture::join)
+                .forEach(i->{return;});
+        Map<String,Integer> result = new HashMap<>();
+        result.put("newInvite",thisLevelStatistics.getNewCustomer().intValue());
+        result.put("rechargers",thisLevelStatistics.getRechargeCustomerFromNew().intValue());
+        result.put("rechargeValue",thisLevelStatistics.getTotalRecharge().intValue());
+        return result;
+    }
+    private void countSingleLevelJustForRecharge(ChildStatistics statistics,String phone,InviteReq inviteReq){
+        //新增用户数
+        if(isNewCustomer(phone,inviteReq)){
+            statistics.getNewCustomer().incrementAndGet();
+        }else{
+            return;
+        }
+        List<LogRechargeEntity> recharges = redisTemplate.opsForList().range("recharge:"+phone,0,-1);
+        //充值人数
+        if(recharges.size() > 0){
+            statistics.getRechargeCustomerFromNew().incrementAndGet();
+        }
+        int rechargeValue = recharges.stream().map(LogRechargeEntity::getRecharge).reduce(0,Integer::sum);
+        statistics.getTotalRecharge().addAndGet(rechargeValue);
+    }
     private boolean isRegistered(String phone){
         boolean hasKey = redisTemplate.hasKey("inviteRelation:"+phone);
         return hasKey;
@@ -355,6 +398,7 @@ public class TempInviteServiceImpl {
         AtomicInteger totalCustomer;//该层总用户数
         AtomicInteger newCustomer; //新增用户数
         AtomicInteger rechargeCustomerFromNew; //新增用户中的充值用户
+        AtomicInteger totalRecharge; //充值总金额
 
         ChildStatistics() {
             this.newValidCustomer = new AtomicInteger(0);
@@ -362,6 +406,7 @@ public class TempInviteServiceImpl {
             this.totalCustomer = new AtomicInteger(0);
             this.newCustomer = new AtomicInteger(0);
             this.rechargeCustomerFromNew = new AtomicInteger(0);
+            this.totalRecharge = new AtomicInteger(0);
         }
 
         public AtomicInteger getNewValidCustomer() {
@@ -382,6 +427,10 @@ public class TempInviteServiceImpl {
 
         public AtomicInteger getRechargeCustomerFromNew(){
             return rechargeCustomerFromNew;
+        }
+
+        public AtomicInteger getTotalRecharge(){
+            return totalRecharge;
         }
     }
 }
