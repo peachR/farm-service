@@ -6,6 +6,7 @@ import com.yiyi.farm.dao.invite.InviteRelationDao;
 import com.yiyi.farm.entity.invite.InviteInfoEntity;
 import com.yiyi.farm.entity.invite.InviteRelationEntity;
 import com.yiyi.farm.entity.invite.LogConsumeEntity;
+import com.yiyi.farm.entity.invite.LogRechargeEntity;
 import com.yiyi.farm.req.invite.InviteReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -202,7 +203,8 @@ public class TempInviteServiceImpl {
 
     private static boolean timeBetween(Timestamp timestamp,int start,int end){
         Long time = timestamp.getTime();
-        if(time.intValue() >= start && time.intValue() <= end){
+        int intTime = (int)(time/1000);
+        if(intTime >= start && intTime <= end){
             return true;
         }
         return false;
@@ -228,7 +230,30 @@ public class TempInviteServiceImpl {
         return false;
     }
 
-
+    /**
+     * 判断这个新增用户在这段时间内是否充值过
+     * @param phone
+     * @param inviteReq
+     * @return
+     */
+    public boolean doHeOrSheRecharger(String phone,InviteReq inviteReq){
+        //不是新增用户
+        if(!isNewCustomer(phone,inviteReq)){
+            return false;
+        }
+        List<LogRechargeEntity> recharges = redisTemplate.opsForList().range("recharge:"+phone,0,-1);
+        long count = recharges.stream().filter(recharge->{
+            if(timeBetween(recharge.getTime(),inviteReq.getStartTime(),inviteReq.getEndTime())){
+                return true;
+            }else {
+                return false;
+            }
+        }).count();
+        if(count != 0){
+            return true;
+        }
+        return false;
+    }
     /**
      * 获取此phone在这个时间段内的消费
      * @param phone
@@ -262,6 +287,10 @@ public class TempInviteServiceImpl {
         //新增用户数
         if(isNewCustomer(phone,inviteReq)){
             statistics.getNewCustomer().incrementAndGet();
+        }
+        //新增用户中的充值数
+        if(doHeOrSheRecharger(phone,inviteReq)){
+            statistics.getRechargeCustomerFromNew().incrementAndGet();
         }
     }
 
@@ -322,15 +351,17 @@ public class TempInviteServiceImpl {
 
     public class ChildStatistics implements Serializable{
         AtomicInteger newValidCustomer;//新增有效用户
-        AtomicInteger newTotalConsume;//总消费金额
+        AtomicInteger newTotalConsume;//总消费金额,这段时间内的所有用户的消费
         AtomicInteger totalCustomer;//该层总用户数
         AtomicInteger newCustomer; //新增用户数
+        AtomicInteger rechargeCustomerFromNew; //新增用户中的充值用户
 
         ChildStatistics() {
             this.newValidCustomer = new AtomicInteger(0);
             this.newTotalConsume = new AtomicInteger(0);
             this.totalCustomer = new AtomicInteger(0);
             this.newCustomer = new AtomicInteger(0);
+            this.rechargeCustomerFromNew = new AtomicInteger(0);
         }
 
         public AtomicInteger getNewValidCustomer() {
@@ -347,6 +378,10 @@ public class TempInviteServiceImpl {
 
         public AtomicInteger getNewCustomer() {
             return newCustomer;
+        }
+
+        public AtomicInteger getRechargeCustomerFromNew(){
+            return rechargeCustomerFromNew;
         }
     }
 }
