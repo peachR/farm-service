@@ -12,6 +12,8 @@ public class InviteReq extends AbstractReq {
     private int chargeConsume;
     private int startTime;
     private int endTime;
+    private int startTimeByRecharge;    //充值信息专用的时间
+    private int endTimeByRecharge;      //充值信息专用的时间
     private int rankNumber;
 
     public String getPhone() {
@@ -68,6 +70,22 @@ public class InviteReq extends AbstractReq {
 
     public void setRankNumber(int rankNumber) {
         this.rankNumber = rankNumber;
+    }
+
+    public int getStartTimeByRecharge() {
+        return startTimeByRecharge;
+    }
+
+    public void setStartTimeByRecharge(int startTimeByRecharge) {
+        this.startTimeByRecharge = startTimeByRecharge;
+    }
+
+    public int getEndTimeByRecharge() {
+        return endTimeByRecharge;
+    }
+
+    public void setEndTimeByRecharge(int endTimeByRecharge) {
+        this.endTimeByRecharge = endTimeByRecharge;
     }
 
     @Override

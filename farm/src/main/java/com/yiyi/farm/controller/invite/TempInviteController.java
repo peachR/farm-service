@@ -82,17 +82,25 @@ public class TempInviteController {
     }
 
     /**
-     * 获得一层的充值信息
+     * 获得充值信息
      * @return
      */
-    @GetMapping("singlerecharge")
-    public Result<Map<String,Integer>> getSingleRecharge(InviteReq inviteReq){
+    @GetMapping("recharge")
+    public Result<List<Map<String,Object>>> getRecharge(InviteReq inviteReq){
         if(isBusy()){
-            Result<Map<String,Integer>> result = Result.newFailureResult();
+            Result<List<Map<String,Object>>> result = Result.newFailureResult();
             result.setErrorMsg("busy");
             return result;
         }
-        return Result.newSuccessResult(inviteService.findSingleRecharge(inviteReq));
+        String[] phones = StringUtil.split(inviteReq.getPhone(),";");
+        List<Map<String,Object>> result = new ArrayList<>();
+        for (String phone:phones) {
+            Map<String,Object> map = new HashMap<>();
+            map.put("phone",phone);
+            map.put("level",inviteService.findRechargeStatistics(phone,inviteReq));
+            result.add(map);
+        }
+        return Result.newSuccessResult(result);
     }
 
     private boolean isBusy(){
