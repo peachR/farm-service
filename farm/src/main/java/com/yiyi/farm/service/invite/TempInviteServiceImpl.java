@@ -40,7 +40,7 @@ public class TempInviteServiceImpl {
     public static ExecutorService executor = Executors.newCachedThreadPool();
 
     /**
-     * 获取邀请数Rank
+     * 获取邀请数Rank，所有号码 新增邀请数 的排名情况
      * @return
      */
     public List<Map<String,String>> getRank(InviteReq inviteReq){
@@ -83,6 +83,11 @@ public class TempInviteServiceImpl {
         System.out.println("return get");
         return result;
     }
+
+    /**
+     * 无用代码，仅仅用来测试遍历所有节点的时间
+     * @return
+     */
     public List<String> test(){
         Map<String, List<InviteRelationEntity>> map = inviteRelationDao.findAllRelation().stream().collect(Collectors.groupingBy(InviteRelationEntity::getPhone));
         List<String> phones = new ArrayList<>(map.keySet());
@@ -105,6 +110,13 @@ public class TempInviteServiceImpl {
         System.out.println("-------------------");
         return phones;
     }
+
+    /**
+     * 初始化缓存，弃用了
+     * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     public boolean initCache() throws ExecutionException, InterruptedException {
         flushDB();
         initConsumeLog();
@@ -456,6 +468,9 @@ public class TempInviteServiceImpl {
         return statisticsMap;
     }
 
+    /**
+     * 统计信息的类，都是并发安全的atomic类
+     */
     public class ChildStatistics implements Serializable{
         AtomicInteger newValidCustomer;//新增有效用户
         AtomicInteger newTotalConsume;//总消费金额,这段时间内的所有用户的消费
