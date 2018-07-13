@@ -386,12 +386,12 @@ public class TempInviteServiceImpl {
         //新增用户数
         if(isNewCustomer(phone,inviteReq)){
             statistics.getNewCustomer().incrementAndGet();
-        }
-        //充值人数
-        if(doHeOrSheRecharger(phone,inviteReq)){
-            statistics.getRechargers().incrementAndGet();
-            //累加充值金额
-            statistics.getRechargesValues().addAndGet(getRechargeValue(phone,inviteReq));
+            //充值人数
+            if(doHeOrSheRecharger(phone,inviteReq)){
+                statistics.getRechargers().incrementAndGet();
+                //累加充值金额
+                statistics.getRechargesValues().addAndGet(getRechargeValue(phone,inviteReq));
+            }
         }
     }
     private boolean isRegistered(String phone){
